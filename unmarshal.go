@@ -3,6 +3,8 @@ package dagpb
 import (
 	"fmt"
 	"io"
+
+	cid "github.com/ipfs/go-cid"
 )
 
 // Unmarshal TODO
@@ -47,6 +49,10 @@ func (node *PBNode) Unmarshal(data []byte) error {
 	if index > l {
 		return io.ErrUnexpectedEOF
 	}
+
+	if node.Links == nil {
+		node.Links = make([]*PBLink, 0)
+	}
 	return nil
 }
 
@@ -74,9 +80,15 @@ func (link *PBLink) unmarshal(data []byte) error {
 				return fmt.Errorf("protobuf: (PBLink) wrong wireType (%d) for Hash", wireType)
 			}
 
-			if link.Hash, index, err = decodeBytes(data, index); err != nil {
+			var chunk []byte
+			if chunk, index, err = decodeBytes(data, index); err != nil {
 				return err
 			}
+			var c cid.Cid
+			if _, c, err = cid.CidFromBytes(chunk); err != nil {
+				return fmt.Errorf("invalid Hash field found in link, expected CID (%v)", err)
+			}
+			link.Hash = &c
 		} else if fieldNum == 2 {
 			if link.Name != nil {
 				return fmt.Errorf("protobuf: (PBLink) duplicate Name section")
@@ -114,6 +126,10 @@ func (link *PBLink) unmarshal(data []byte) error {
 
 	if index > l {
 		return io.ErrUnexpectedEOF
+	}
+
+	if link.Hash == nil {
+		return fmt.Errorf("invalid Hash field found in link, expected CID")
 	}
 	return nil
 }

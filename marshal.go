@@ -3,24 +3,28 @@ package dagpb
 // based on the original pb codegen
 
 import (
+	"fmt"
 	math_bits "math/bits"
 )
 
 // Marshal TODO
-func (m *PBNode) Marshal() (data []byte, err error) {
-	size := m.size()
+func (node *PBNode) Marshal() (data []byte, err error) {
+	if err := node.validate(); err != nil {
+		return nil, err
+	}
+	size := node.size()
 	data = make([]byte, size)
 
 	i := len(data)
-	if m.Data != nil {
-		i -= len(m.Data)
-		copy(data[i:], m.Data)
-		i = encodeVarint(data, i, uint64(len(m.Data))) - 1
+	if node.Data != nil {
+		i -= len(node.Data)
+		copy(data[i:], node.Data)
+		i = encodeVarint(data, i, uint64(len(node.Data))) - 1
 		data[i] = 0xa
 	}
-	if len(m.Links) > 0 {
-		for iNdEx := len(m.Links) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.Links[iNdEx].marshal(data[:i])
+	if len(node.Links) > 0 {
+		for iNdEx := len(node.Links) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := node.Links[iNdEx].marshal(data[:i])
 			if err != nil {
 				return nil, err
 			}
@@ -32,59 +36,82 @@ func (m *PBNode) Marshal() (data []byte, err error) {
 	return data[:size], nil
 }
 
-func (m *PBLink) marshal(data []byte) (int, error) {
+func (link *PBLink) marshal(data []byte) (int, error) {
 	i := len(data)
-	if m.Tsize != nil {
-		i = encodeVarint(data, i, uint64(*m.Tsize)) - 1
+	if link.Tsize != nil {
+		i = encodeVarint(data, i, uint64(*link.Tsize)) - 1
 		data[i] = 0x18
 	}
-	if m.Name != nil {
-		i -= len(*m.Name)
-		copy(data[i:], *m.Name)
-		i = encodeVarint(data, i, uint64(len(*m.Name))) - 1
+	if link.Name != nil {
+		i -= len(*link.Name)
+		copy(data[i:], *link.Name)
+		i = encodeVarint(data, i, uint64(len(*link.Name))) - 1
 		data[i] = 0x12
 	}
-	if m.Hash != nil {
-		i -= len(m.Hash)
-		copy(data[i:], m.Hash)
-		i = encodeVarint(data, i, uint64(len(m.Hash))) - 1
+	if link.Hash != nil {
+		byts := link.Hash.Bytes()
+		i -= len(byts)
+		copy(data[i:], byts)
+		i = encodeVarint(data, i, uint64(len(byts))) - 1
 		data[i] = 0xa
+	} else {
+		return 0, fmt.Errorf("invalid DAG-PB form (link must have a Hash)")
 	}
 	return len(data) - i, nil
 }
 
-func (m *PBLink) size() (n int) {
-	if m == nil {
+func (node *PBNode) validate() error {
+	if node == nil {
+		return fmt.Errorf("PBNode not defined")
+	}
+
+	if node.Links == nil {
+		return fmt.Errorf("invalid DAG-PB form (Links must be an array)")
+	}
+
+	for i, link := range node.Links {
+		if link.Hash == nil {
+			return fmt.Errorf("invalid DAG-PB form (link must have a Hash)")
+		}
+
+		if i > 0 && pbLinkLess(link, node.Links[i-1]) {
+			return fmt.Errorf("invalid DAG-PB form (links must be sorted by Name bytes)")
+		}
+	}
+
+	return nil
+}
+
+func (link *PBLink) size() (n int) {
+	if link == nil {
 		return 0
 	}
 	var l int
-	_ = l
-	if m.Hash != nil {
-		l = len(m.Hash)
+	if link.Hash != nil {
+		l = link.Hash.ByteLen()
 		n += 1 + l + sizeOfVarint(uint64(l))
 	}
-	if m.Name != nil {
-		l = len(*m.Name)
+	if link.Name != nil {
+		l = len(*link.Name)
 		n += 1 + l + sizeOfVarint(uint64(l))
 	}
-	if m.Tsize != nil {
-		n += 1 + sizeOfVarint(uint64(*m.Tsize))
+	if link.Tsize != nil {
+		n += 1 + sizeOfVarint(uint64(*link.Tsize))
 	}
 	return n
 }
 
-func (m *PBNode) size() (n int) {
-	if m == nil {
+func (node *PBNode) size() (n int) {
+	if node == nil {
 		return 0
 	}
 	var l int
-	_ = l
-	if m.Data != nil {
-		l = len(m.Data)
+	if node.Data != nil {
+		l = len(node.Data)
 		n += 1 + l + sizeOfVarint(uint64(l))
 	}
-	if len(m.Links) > 0 {
-		for _, e := range m.Links {
+	if len(node.Links) > 0 {
+		for _, e := range node.Links {
 			l = e.size()
 			n += 1 + l + sizeOfVarint(uint64(l))
 		}
