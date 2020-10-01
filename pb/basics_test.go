@@ -1,4 +1,4 @@
-package dagpb
+package pb
 
 import (
 	"encoding/hex"

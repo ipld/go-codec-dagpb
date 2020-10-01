@@ -1,4 +1,4 @@
-package dagpb
+package pb
 
 import (
 	"sort"
@@ -29,12 +29,41 @@ func NewPBNodeFromData(data []byte) *PBNode {
 	return n
 }
 
+type linkBuilder struct {
+	link *PBLink
+}
+
+func (lb *linkBuilder) SetHash(hash *cid.Cid) { lb.link.Hash = hash }
+func (lb *linkBuilder) SetName(name *string)  { lb.link.Name = name }
+func (lb *linkBuilder) SetTsize(tsize uint64) { lb.link.Tsize = &tsize }
+
+type nodeBuilder struct {
+	node *PBNode
+}
+
+func (nb *nodeBuilder) SetData(data []byte) { nb.node.Data = data }
+func (nb *nodeBuilder) AddLink() PBLinkBuilder {
+	nb.mklinks()
+	nb.node.Links = append(nb.node.Links, &PBLink{})
+	return &linkBuilder{nb.node.Links[len(nb.node.Links)-1]}
+}
+func (nb *nodeBuilder) mklinks() {
+	if nb.node.Links == nil {
+		nb.node.Links = make([]*PBLink, 0)
+	}
+}
+func (nb *nodeBuilder) done() *PBNode {
+	nb.mklinks()
+	return nb.node
+}
+
 func UnmarshalPBNode(bytes []byte) (*PBNode, error) {
-	n := NewPBNode()
-	if err := n.Unmarshal(bytes); err != nil {
+	nb := nodeBuilder{NewPBNode()}
+
+	if err := Unmarshal(bytes, &nb); err != nil {
 		return nil, err
 	}
-	return n, nil
+	return nb.done(), nil
 }
 
 func NewPBLinkFromCid(c cid.Cid) *PBLink {

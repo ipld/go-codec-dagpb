@@ -1,4 +1,4 @@
-package dagpb
+package pb
 
 // mirrored in JavaScript @ https://github.com/ipld/js-dag-pb/blob/master/test/test-compat.js
 

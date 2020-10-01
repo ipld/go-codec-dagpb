@@ -1,4 +1,4 @@
-package dagpb
+package pb
 
 import (
 	"fmt"
@@ -7,10 +7,21 @@ import (
 	cid "github.com/ipfs/go-cid"
 )
 
-// Unmarshal TODO
-func (node *PBNode) Unmarshal(data []byte) error {
+type PBLinkBuilder interface {
+	SetHash(*cid.Cid)
+	SetName(*string)
+	SetTsize(uint64)
+}
+
+type PBNodeBuilder interface {
+	SetData([]byte)
+	AddLink() PBLinkBuilder
+}
+
+func Unmarshal(data []byte, builder PBNodeBuilder) error {
 	var err error
 	var fieldNum, wireType int
+	haveData := false
 	l := len(data)
 	index := 0
 	for index < l {
@@ -22,14 +33,17 @@ func (node *PBNode) Unmarshal(data []byte) error {
 		}
 
 		if fieldNum == 1 {
-			if node.Data != nil {
+			if haveData {
 				return fmt.Errorf("protobuf: (PBNode) duplicate Data section")
 			}
-			if node.Data, index, err = decodeBytes(data, index); err != nil {
+			var chunk []byte
+			if chunk, index, err = decodeBytes(data, index); err != nil {
 				return err
 			}
+			builder.SetData(chunk)
+			haveData = true
 		} else if fieldNum == 2 {
-			if node.Data != nil {
+			if haveData {
 				return fmt.Errorf("protobuf: (PBNode) invalid order, found Data before Links content")
 			}
 
@@ -37,8 +51,7 @@ func (node *PBNode) Unmarshal(data []byte) error {
 			if chunk, index, err = decodeBytes(data, index); err != nil {
 				return err
 			}
-			node.Links = append(node.Links, &PBLink{})
-			if err := node.Links[len(node.Links)-1].unmarshal(chunk); err != nil {
+			if err = unmarshalLink(chunk, builder.AddLink()); err != nil {
 				return err
 			}
 		} else {
@@ -50,15 +63,15 @@ func (node *PBNode) Unmarshal(data []byte) error {
 		return io.ErrUnexpectedEOF
 	}
 
-	if node.Links == nil {
-		node.Links = make([]*PBLink, 0)
-	}
 	return nil
 }
 
-func (link *PBLink) unmarshal(data []byte) error {
+func unmarshalLink(data []byte, builder PBLinkBuilder) error {
 	var err error
 	var fieldNum, wireType int
+	haveHash := false
+	haveName := false
+	haveTsize := false
 	l := len(data)
 	index := 0
 	for index < l {
@@ -67,13 +80,13 @@ func (link *PBLink) unmarshal(data []byte) error {
 		}
 
 		if fieldNum == 1 {
-			if link.Hash != nil {
+			if haveHash {
 				return fmt.Errorf("protobuf: (PBLink) duplicate Hash section")
 			}
-			if link.Name != nil {
+			if haveName {
 				return fmt.Errorf("protobuf: (PBLink) invalid order, found Name before Hash")
 			}
-			if link.Tsize != nil {
+			if haveTsize {
 				return fmt.Errorf("protobuf: (PBLink) invalid order, found Tsize before Hash")
 			}
 			if wireType != 2 {
@@ -88,12 +101,13 @@ func (link *PBLink) unmarshal(data []byte) error {
 			if _, c, err = cid.CidFromBytes(chunk); err != nil {
 				return fmt.Errorf("invalid Hash field found in link, expected CID (%v)", err)
 			}
-			link.Hash = &c
+			builder.SetHash(&c)
+			haveHash = true
 		} else if fieldNum == 2 {
-			if link.Name != nil {
+			if haveName {
 				return fmt.Errorf("protobuf: (PBLink) duplicate Name section")
 			}
-			if link.Tsize != nil {
+			if haveTsize {
 				return fmt.Errorf("protobuf: (PBLink) invalid order, found Tsize before Name")
 			}
 			if wireType != 2 {
@@ -105,9 +119,10 @@ func (link *PBLink) unmarshal(data []byte) error {
 				return err
 			}
 			s := string(chunk)
-			link.Name = &s
+			builder.SetName(&s)
+			haveName = true
 		} else if fieldNum == 3 {
-			if link.Tsize != nil {
+			if haveTsize {
 				return fmt.Errorf("protobuf: (PBLink) duplicate Tsize section")
 			}
 			if wireType != 0 {
@@ -118,7 +133,8 @@ func (link *PBLink) unmarshal(data []byte) error {
 			if v, index, err = decodeVarint(data, index); err != nil {
 				return err
 			}
-			link.Tsize = &v
+			builder.SetTsize(v)
+			haveTsize = true
 		} else {
 			return fmt.Errorf("protobuf: (PBLink) invalid fieldNumber, expected 1, 2 or 3, got %d", fieldNum)
 		}
@@ -128,7 +144,7 @@ func (link *PBLink) unmarshal(data []byte) error {
 		return io.ErrUnexpectedEOF
 	}
 
-	if link.Hash == nil {
+	if !haveHash {
 		return fmt.Errorf("invalid Hash field found in link, expected CID")
 	}
 	return nil

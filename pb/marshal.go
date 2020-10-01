@@ -1,4 +1,4 @@
-package dagpb
+package pb
 
 // based on the original pb codegen
 
