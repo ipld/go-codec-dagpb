@@ -5,27 +5,34 @@ import (
 	"io"
 
 	cid "github.com/ipfs/go-cid"
+	"github.com/polydawn/refmt/shared"
 )
 
 type PBLinkBuilder interface {
-	SetHash(*cid.Cid)
-	SetName(*string)
-	SetTsize(uint64)
+	SetHash(*cid.Cid) error
+	SetName(*string) error
+	SetTsize(uint64) error
+	Done() error
 }
 
 type PBNodeBuilder interface {
-	SetData([]byte)
-	AddLink() PBLinkBuilder
+	SetData([]byte) error
+	AddLink() (PBLinkBuilder, error)
+	Done() error
 }
 
-func Unmarshal(data []byte, builder PBNodeBuilder) error {
-	var err error
-	var fieldNum, wireType int
+func Unmarshal(in io.Reader, builder PBNodeBuilder) error {
 	haveData := false
-	l := len(data)
-	index := 0
-	for index < l {
-		if fieldNum, wireType, index, err = decodeKey(data, index); err != nil {
+	reader := shared.NewReader(in)
+	for {
+		_, err := reader.Readn1()
+		if err == io.EOF {
+			break
+		}
+		reader.Unreadn1()
+
+		fieldNum, wireType, err := decodeKey(reader)
+		if err != nil {
 			return err
 		}
 		if wireType != 2 {
@@ -37,21 +44,27 @@ func Unmarshal(data []byte, builder PBNodeBuilder) error {
 				return fmt.Errorf("protobuf: (PBNode) duplicate Data section")
 			}
 			var chunk []byte
-			if chunk, index, err = decodeBytes(data, index); err != nil {
+			if chunk, err = decodeBytes(reader); err != nil {
 				return err
 			}
-			builder.SetData(chunk)
+			if err := builder.SetData(chunk); err != nil {
+				return err
+			}
 			haveData = true
 		} else if fieldNum == 2 {
 			if haveData {
 				return fmt.Errorf("protobuf: (PBNode) invalid order, found Data before Links content")
 			}
 
-			var chunk []byte
-			if chunk, index, err = decodeBytes(data, index); err != nil {
+			bytesLen, err := decodeVarint(reader)
+			if err != nil {
 				return err
 			}
-			if err = unmarshalLink(chunk, builder.AddLink()); err != nil {
+			lb, err := builder.AddLink()
+			if err != nil {
+				return err
+			}
+			if err = unmarshalLink(reader, int(bytesLen), lb); err != nil {
 				return err
 			}
 		} else {
@@ -59,23 +72,23 @@ func Unmarshal(data []byte, builder PBNodeBuilder) error {
 		}
 	}
 
-	if index > l {
-		return io.ErrUnexpectedEOF
-	}
-
-	return nil
+	return builder.Done()
 }
 
-func unmarshalLink(data []byte, builder PBLinkBuilder) error {
-	var err error
-	var fieldNum, wireType int
+func unmarshalLink(reader shared.SlickReader, length int, builder PBLinkBuilder) error {
 	haveHash := false
 	haveName := false
 	haveTsize := false
-	l := len(data)
-	index := 0
-	for index < l {
-		if fieldNum, wireType, index, err = decodeKey(data, index); err != nil {
+	startOffset := reader.NumRead()
+	for {
+		readBytes := reader.NumRead() - startOffset
+		if readBytes == length {
+			break
+		} else if readBytes > length {
+			return fmt.Errorf("protobuf: (PBLink) bad length for link")
+		}
+		fieldNum, wireType, err := decodeKey(reader)
+		if err != nil {
 			return err
 		}
 
@@ -94,14 +107,16 @@ func unmarshalLink(data []byte, builder PBLinkBuilder) error {
 			}
 
 			var chunk []byte
-			if chunk, index, err = decodeBytes(data, index); err != nil {
+			if chunk, err = decodeBytes(reader); err != nil {
 				return err
 			}
 			var c cid.Cid
 			if _, c, err = cid.CidFromBytes(chunk); err != nil {
 				return fmt.Errorf("invalid Hash field found in link, expected CID (%v)", err)
 			}
-			builder.SetHash(&c)
+			if err := builder.SetHash(&c); err != nil {
+				return err
+			}
 			haveHash = true
 		} else if fieldNum == 2 {
 			if haveName {
@@ -115,11 +130,13 @@ func unmarshalLink(data []byte, builder PBLinkBuilder) error {
 			}
 
 			var chunk []byte
-			if chunk, index, err = decodeBytes(data, index); err != nil {
+			if chunk, err = decodeBytes(reader); err != nil {
 				return err
 			}
 			s := string(chunk)
-			builder.SetName(&s)
+			if err := builder.SetName(&s); err != nil {
+				return err
+			}
 			haveName = true
 		} else if fieldNum == 3 {
 			if haveTsize {
@@ -130,69 +147,65 @@ func unmarshalLink(data []byte, builder PBLinkBuilder) error {
 			}
 
 			var v uint64
-			if v, index, err = decodeVarint(data, index); err != nil {
+			if v, err = decodeVarint(reader); err != nil {
 				return err
 			}
-			builder.SetTsize(v)
+			if err := builder.SetTsize(v); err != nil {
+				return err
+			}
 			haveTsize = true
 		} else {
 			return fmt.Errorf("protobuf: (PBLink) invalid fieldNumber, expected 1, 2 or 3, got %d", fieldNum)
 		}
 	}
 
-	if index > l {
-		return io.ErrUnexpectedEOF
-	}
-
 	if !haveHash {
 		return fmt.Errorf("invalid Hash field found in link, expected CID")
 	}
-	return nil
+
+	return builder.Done()
 }
 
-func decodeKey(data []byte, offset int) (int, int, int, error) {
+func decodeKey(reader shared.SlickReader) (int, int, error) {
 	var wire uint64
 	var err error
-	if wire, offset, err = decodeVarint(data, offset); err != nil {
-		return 0, 0, 0, err
+	if wire, err = decodeVarint(reader); err != nil {
+		return 0, 0, err
 	}
 	fieldNum := int(wire >> 3)
 	wireType := int(wire & 0x7)
-	return fieldNum, wireType, offset, nil
+	return fieldNum, wireType, nil
 
 }
 
-func decodeBytes(data []byte, offset int) ([]byte, int, error) {
-	var bytesLen uint64
-	var err error
-	if bytesLen, offset, err = decodeVarint(data, offset); err != nil {
-		return nil, 0, err
+func decodeBytes(reader shared.SlickReader) ([]byte, error) {
+	bytesLen, err := decodeVarint(reader)
+	if err != nil {
+		return nil, err
 	}
-	postOffset := offset + int(bytesLen)
-	if postOffset > len(data) {
-		return nil, 0, io.ErrUnexpectedEOF
+	byts, err := reader.Readn(int(bytesLen))
+	if err != nil {
+		return nil, fmt.Errorf("protobuf: unexpected read error: %w", err)
 	}
-	return data[offset:postOffset], postOffset, nil
+	return byts, nil
 }
 
-func decodeVarint(data []byte, offset int) (uint64, int, error) {
+func decodeVarint(reader shared.SlickReader) (uint64, error) {
 	var v uint64
-	l := len(data)
 	for shift := uint(0); ; shift += 7 {
 		if shift >= 64 {
-			return 0, 0, ErrIntOverflow
+			return 0, ErrIntOverflow
 		}
-		if offset >= l {
-			return 0, 0, io.ErrUnexpectedEOF
+		b, err := reader.Readn1()
+		if err != nil {
+			return 0, fmt.Errorf("protobuf: unexpected read error: %w", err)
 		}
-		b := data[offset]
-		offset++
 		v |= uint64(b&0x7F) << shift
 		if b < 0x80 {
 			break
 		}
 	}
-	return v, offset, nil
+	return v, nil
 }
 
 // ErrIntOverflow TODO

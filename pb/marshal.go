@@ -23,8 +23,8 @@ func (node *PBNode) Marshal() (data []byte, err error) {
 		data[i] = 0xa
 	}
 	if len(node.Links) > 0 {
-		for iNdEx := len(node.Links) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := node.Links[iNdEx].marshal(data[:i])
+		for index := len(node.Links) - 1; index >= 0; index-- {
+			size, err := node.Links[index].marshal(data[:i])
 			if err != nil {
 				return nil, err
 			}
