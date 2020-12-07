@@ -250,7 +250,7 @@ func verifyRoundTrip(t *testing.T, tc testCase) {
 }
 
 func nodeToString(t *testing.T, n *PBNode) (string, error) {
-	bytes, err := n.Marshal()
+	bytes, err := MarshalPBNode(n)
 	if err != nil {
 		return "", err
 	}

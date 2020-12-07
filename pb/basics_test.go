@@ -19,7 +19,7 @@ func mkcid(t *testing.T, cidStr string) cid.Cid {
 
 func TestEmptyNode(t *testing.T) {
 	n := NewPBNode()
-	byts, err := n.Marshal()
+	byts, err := MarshalPBNode(n)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func TestEmptyNode(t *testing.T) {
 func TestNodeWithData(t *testing.T) {
 	n := NewPBNode()
 	n.Data = []byte{0, 1, 2, 3, 4}
-	byts, err := n.Marshal()
+	byts, err := MarshalPBNode(n)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func TestNodeWithData(t *testing.T) {
 func TestNodeWithLink(t *testing.T) {
 	n := NewPBNode()
 	n.Links = append(n.Links, NewPBLinkFromCid(mkcid(t, "QmWDtUQj38YLW8v3q4A6LwPn4vYKEbuKWpgSm6bjKW6Xfe")))
-	byts, err := n.Marshal()
+	byts, err := MarshalPBNode(n)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,13 +86,13 @@ func TestNodeWithTwoUnsortedLinks(t *testing.T) {
 	n := NewPBNodeFromData([]byte("some data"))
 	n.Links = append(n.Links, NewPBLink("some other link", mkcid(t, "QmXg9Pp2ytZ14xgmQjYEiHjVjMFXzCVVEcRTWJBmLgR39V"), 8))
 	n.Links = append(n.Links, NewPBLink("some link", mkcid(t, "QmXg9Pp2ytZ14xgmQjYEiHjVjMFXzCVVEcRTWJBmLgR39U"), 100000000))
-	byts, err := n.Marshal()
+	byts, err := MarshalPBNode(n)
 	if err == nil || !strings.Contains(err.Error(), "links must be sorted") || byts != nil {
 		t.Fatal("Expected to error from unsorted links")
 	}
 
 	n.SortLinks()
-	if byts, err = n.Marshal(); err != nil {
+	if byts, err = MarshalPBNode(n); err != nil {
 		t.Fatal(err)
 	}
 
@@ -154,13 +154,13 @@ func TestNodeWithStableSortedLinks(t *testing.T) {
 	for _, c := range cids {
 		n.Links = append(n.Links, NewPBLink("", mkcid(t, c), 262158))
 	}
-	byts, err := n.Marshal()
+	byts, err := MarshalPBNode(n)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	n.SortLinks()
-	byts2, err := n.Marshal()
+	byts2, err := MarshalPBNode(n)
 	if err != nil {
 		t.Fatal(err)
 	}

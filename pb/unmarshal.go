@@ -1,6 +1,7 @@
 package pb
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 
@@ -21,7 +22,32 @@ type PBNodeBuilder interface {
 	Done() error
 }
 
-func Unmarshal(in io.Reader, builder PBNodeBuilder) error {
+func UnmarshalPBNode(byts []byte) (*PBNode, error) {
+	node := NewPBNode()
+	tokenReceiver := func(tok Token) error {
+		switch tok.Type {
+		case TypeData:
+			node.Data = tok.Bytes
+		case TypeLink:
+			node.Links = append(node.Links, &PBLink{})
+		case TypeHash:
+			node.Links[len(node.Links)-1].Hash = tok.Cid
+		case TypeName:
+			s := string(tok.Bytes)
+			node.Links[len(node.Links)-1].Name = &s
+		case TypeTSize:
+			node.Links[len(node.Links)-1].Tsize = &tok.Int
+		}
+		return nil
+	}
+	if err := Unmarshal(bytes.NewReader(byts), tokenReceiver); err != nil {
+		return nil, err
+	}
+
+	return node, nil
+}
+
+func Unmarshal(in io.Reader, tokenReceiver func(tok Token) error) error {
 	haveData := false
 	reader := shared.NewReader(in)
 	for {
@@ -47,7 +73,7 @@ func Unmarshal(in io.Reader, builder PBNodeBuilder) error {
 			if chunk, err = decodeBytes(reader); err != nil {
 				return err
 			}
-			if err := builder.SetData(chunk); err != nil {
+			if err := tokenReceiver(Token{Type: TypeData, Bytes: chunk}); err != nil {
 				return err
 			}
 			haveData = true
@@ -60,11 +86,13 @@ func Unmarshal(in io.Reader, builder PBNodeBuilder) error {
 			if err != nil {
 				return err
 			}
-			lb, err := builder.AddLink()
-			if err != nil {
+			if err = tokenReceiver(Token{Type: TypeLink}); err != nil {
 				return err
 			}
-			if err = unmarshalLink(reader, int(bytesLen), lb); err != nil {
+			if err = unmarshalLink(reader, int(bytesLen), tokenReceiver); err != nil {
+				return err
+			}
+			if err = tokenReceiver(Token{Type: TypeLinkEnd}); err != nil {
 				return err
 			}
 		} else {
@@ -72,10 +100,10 @@ func Unmarshal(in io.Reader, builder PBNodeBuilder) error {
 		}
 	}
 
-	return builder.Done()
+	return nil
 }
 
-func unmarshalLink(reader shared.SlickReader, length int, builder PBLinkBuilder) error {
+func unmarshalLink(reader shared.SlickReader, length int, tokenReceiver func(tok Token) error) error {
 	haveHash := false
 	haveName := false
 	haveTsize := false
@@ -114,7 +142,7 @@ func unmarshalLink(reader shared.SlickReader, length int, builder PBLinkBuilder)
 			if _, c, err = cid.CidFromBytes(chunk); err != nil {
 				return fmt.Errorf("invalid Hash field found in link, expected CID (%v)", err)
 			}
-			if err := builder.SetHash(&c); err != nil {
+			if err := tokenReceiver(Token{Type: TypeHash, Cid: &c}); err != nil {
 				return err
 			}
 			haveHash = true
@@ -133,8 +161,7 @@ func unmarshalLink(reader shared.SlickReader, length int, builder PBLinkBuilder)
 			if chunk, err = decodeBytes(reader); err != nil {
 				return err
 			}
-			s := string(chunk)
-			if err := builder.SetName(&s); err != nil {
+			if err := tokenReceiver(Token{Type: TypeName, Bytes: chunk}); err != nil {
 				return err
 			}
 			haveName = true
@@ -150,7 +177,7 @@ func unmarshalLink(reader shared.SlickReader, length int, builder PBLinkBuilder)
 			if v, err = decodeVarint(reader); err != nil {
 				return err
 			}
-			if err := builder.SetTsize(v); err != nil {
+			if err := tokenReceiver(Token{Type: TypeTSize, Int: v}); err != nil {
 				return err
 			}
 			haveTsize = true
@@ -163,7 +190,7 @@ func unmarshalLink(reader shared.SlickReader, length int, builder PBLinkBuilder)
 		return fmt.Errorf("invalid Hash field found in link, expected CID")
 	}
 
-	return builder.Done()
+	return nil
 }
 
 func decodeKey(reader shared.SlickReader) (int, int, error) {
@@ -175,7 +202,6 @@ func decodeKey(reader shared.SlickReader) (int, int, error) {
 	fieldNum := int(wire >> 3)
 	wireType := int(wire & 0x7)
 	return fieldNum, wireType, nil
-
 }
 
 func decodeBytes(reader shared.SlickReader) ([]byte, error) {

@@ -4,16 +4,66 @@ package pb
 
 import (
 	"fmt"
+	"io"
 	math_bits "math/bits"
 )
 
 // Marshal TODO
-func (node *PBNode) Marshal() (data []byte, err error) {
+func Marshal(out io.Writer, tokenSource func() (Token, error)) error {
+	writeLead := func(wire byte, size uint64) {
+		lead := make([]byte, sizeOfVarint(size)+1)
+		lead[0] = wire
+		encodeVarint(lead, len(lead), size)
+		out.Write(lead)
+	}
+
+	var link PBLink
+
+	for {
+		tok, err := tokenSource()
+		if err != nil {
+			return err
+		}
+		if tok.Type == TypeEnd {
+			break
+		}
+
+		switch tok.Type {
+		case TypeData:
+			writeLead(0xa, uint64(len(tok.Bytes)))
+			out.Write(tok.Bytes)
+		case TypeLinkEnd:
+			l := link.size()
+			writeLead(0x12, uint64(l))
+			chunk := make([]byte, l)
+			wrote, err := link.marshal(chunk)
+			if err != nil {
+				return err
+			}
+			if wrote != l {
+				return fmt.Errorf("bad PBLink marshal, wrote wrong number of bytes")
+			}
+			out.Write(chunk)
+			link = PBLink{}
+		case TypeHash:
+			link.Hash = tok.Cid
+		case TypeName:
+			s := string(tok.Bytes)
+			link.Name = &s
+		case TypeTSize:
+			link.Tsize = &tok.Int
+		}
+	}
+
+	return nil
+}
+
+func MarshalPBNode(node *PBNode) ([]byte, error) {
 	if err := node.validate(); err != nil {
 		return nil, err
 	}
 	size := node.size()
-	data = make([]byte, size)
+	data := make([]byte, size)
 
 	i := len(data)
 	if node.Data != nil {

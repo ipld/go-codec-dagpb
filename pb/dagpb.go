@@ -1,7 +1,6 @@
 package pb
 
 import (
-	"bytes"
 	"sort"
 
 	cid "github.com/ipfs/go-cid"
@@ -30,61 +29,24 @@ func NewPBNodeFromData(data []byte) *PBNode {
 	return n
 }
 
-type linkBuilder struct {
-	link *PBLink
-}
+type TokenType byte
 
-func (lb *linkBuilder) SetHash(hash *cid.Cid) error {
-	lb.link.Hash = hash
-	return nil
-}
+const (
+	TypeData    TokenType = 'd'
+	TypeLinks   TokenType = '['
+	TypeLink    TokenType = 'l'
+	TypeLinkEnd TokenType = 'e'
+	TypeHash    TokenType = 'h'
+	TypeName    TokenType = 'n'
+	TypeTSize   TokenType = 's'
+	TypeEnd     TokenType = 'x'
+)
 
-func (lb *linkBuilder) SetName(name *string) error {
-	lb.link.Name = name
-	return nil
-}
-
-func (lb *linkBuilder) SetTsize(tsize uint64) error {
-	lb.link.Tsize = &tsize
-	return nil
-}
-
-func (lb *linkBuilder) Done() error { return nil }
-
-type nodeBuilder struct {
-	node *PBNode
-}
-
-func (nb *nodeBuilder) SetData(data []byte) error {
-	nb.node.Data = data
-	return nil
-}
-
-func (nb *nodeBuilder) AddLink() (PBLinkBuilder, error) {
-	nb.mklinks()
-	nb.node.Links = append(nb.node.Links, &PBLink{})
-	return &linkBuilder{nb.node.Links[len(nb.node.Links)-1]}, nil
-}
-
-func (nb *nodeBuilder) mklinks() {
-	if nb.node.Links == nil {
-		nb.node.Links = make([]*PBLink, 0)
-	}
-}
-
-func (nb *nodeBuilder) Done() error {
-	nb.mklinks()
-	return nil
-}
-
-func UnmarshalPBNode(byts []byte) (*PBNode, error) {
-	nb := nodeBuilder{NewPBNode()}
-
-	if err := Unmarshal(bytes.NewReader(byts), &nb); err != nil {
-		return nil, err
-	}
-	nb.Done()
-	return nb.node, nil
+type Token struct {
+	Type  TokenType
+	Bytes []byte
+	Cid   *cid.Cid
+	Int   uint64
 }
 
 func NewPBLinkFromCid(c cid.Cid) *PBLink {
