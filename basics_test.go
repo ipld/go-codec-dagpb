@@ -88,6 +88,18 @@ func validate(t *testing.T, actual ipld.Node, expected *pb.PBNode) {
 func runTest(t *testing.T, bytsHex string, expected *pb.PBNode) {
 	byts, _ := hex.DecodeString(bytsHex)
 
+	roundTrip := func(t *testing.T, node ipld.Node) {
+		var buf bytes.Buffer
+		if err := Marshal(node, &buf); err != nil {
+			t.Fatal(err)
+		}
+
+		// fmt.Printf("CMP\n\tFrom: %v\n\tTo:   %v\n", hex.EncodeToString(byts), hex.EncodeToString(buf.Bytes()))
+		if bytes.Compare(buf.Bytes(), byts) != 0 {
+			t.Fatal("Round-trip resulted in different bytes")
+		}
+	}
+
 	t.Run("basicnode", func(t *testing.T) {
 		nb := basicnode.Prototype__Map{}.NewBuilder()
 		err := Unmarshal(nb, bytes.NewReader(byts))
@@ -97,15 +109,7 @@ func runTest(t *testing.T, bytsHex string, expected *pb.PBNode) {
 
 		node := nb.Build()
 		validate(t, node, expected)
-
-		var buf bytes.Buffer
-		if err := Marshal(node, &buf); err != nil {
-			t.Fatal(err)
-		}
-
-		if bytes.Compare(buf.Bytes(), byts) != 0 {
-			t.Fatal("Round-trip resulted in different bytes")
-		}
+		roundTrip(t, node)
 	})
 
 	t.Run("typed", func(t *testing.T) {
@@ -114,7 +118,9 @@ func runTest(t *testing.T, bytsHex string, expected *pb.PBNode) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		validate(t, nb.Build(), expected)
+		node := nb.Build()
+		validate(t, node, expected)
+		roundTrip(t, node)
 	})
 }
 

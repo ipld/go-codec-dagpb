@@ -60,7 +60,11 @@ func NewPBLink(name string, c cid.Cid, tsize uint64) *PBLink {
 }
 
 func (node *PBNode) SortLinks() {
-	sort.Stable(pbLinkSlice(node.Links))
+	SortLinks(node.Links)
+}
+
+func SortLinks(links []*PBLink) {
+	sort.Stable(pbLinkSlice(links))
 }
 
 type pbLinkSlice []*PBLink

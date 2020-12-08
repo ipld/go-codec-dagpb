@@ -11,9 +11,9 @@ import (
 // Marshal TODO
 func Marshal(out io.Writer, tokenSource func() (Token, error)) error {
 	writeLead := func(wire byte, size uint64) {
-		lead := make([]byte, sizeOfVarint(size)+1)
+		lead := make([]byte, SizeOfVarint(size)+1)
 		lead[0] = wire
-		encodeVarint(lead, len(lead), size)
+		EncodeVarint(lead, len(lead), size)
 		out.Write(lead)
 	}
 
@@ -33,10 +33,10 @@ func Marshal(out io.Writer, tokenSource func() (Token, error)) error {
 			writeLead(0xa, uint64(len(tok.Bytes)))
 			out.Write(tok.Bytes)
 		case TypeLinkEnd:
-			l := link.size()
+			l := link.EncodedSize()
 			writeLead(0x12, uint64(l))
 			chunk := make([]byte, l)
-			wrote, err := link.marshal(chunk)
+			wrote, err := link.Marshal(chunk)
 			if err != nil {
 				return err
 			}
@@ -59,50 +59,50 @@ func Marshal(out io.Writer, tokenSource func() (Token, error)) error {
 }
 
 func MarshalPBNode(node *PBNode) ([]byte, error) {
-	if err := node.validate(); err != nil {
+	if err := node.Validate(); err != nil {
 		return nil, err
 	}
-	size := node.size()
+	size := node.EncodedSize()
 	data := make([]byte, size)
 
 	i := len(data)
 	if node.Data != nil {
 		i -= len(node.Data)
 		copy(data[i:], node.Data)
-		i = encodeVarint(data, i, uint64(len(node.Data))) - 1
+		i = EncodeVarint(data, i, uint64(len(node.Data))) - 1
 		data[i] = 0xa
 	}
 	if len(node.Links) > 0 {
 		for index := len(node.Links) - 1; index >= 0; index-- {
-			size, err := node.Links[index].marshal(data[:i])
+			size, err := node.Links[index].Marshal(data[:i])
 			if err != nil {
 				return nil, err
 			}
 			i -= size
-			i = encodeVarint(data, i, uint64(size)) - 1
+			i = EncodeVarint(data, i, uint64(size)) - 1
 			data[i] = 0x12
 		}
 	}
 	return data[:size], nil
 }
 
-func (link *PBLink) marshal(data []byte) (int, error) {
+func (link *PBLink) Marshal(data []byte) (int, error) {
 	i := len(data)
 	if link.Tsize != nil {
-		i = encodeVarint(data, i, uint64(*link.Tsize)) - 1
+		i = EncodeVarint(data, i, uint64(*link.Tsize)) - 1
 		data[i] = 0x18
 	}
 	if link.Name != nil {
 		i -= len(*link.Name)
 		copy(data[i:], *link.Name)
-		i = encodeVarint(data, i, uint64(len(*link.Name))) - 1
+		i = EncodeVarint(data, i, uint64(len(*link.Name))) - 1
 		data[i] = 0x12
 	}
 	if link.Hash != nil {
 		byts := link.Hash.Bytes()
 		i -= len(byts)
 		copy(data[i:], byts)
-		i = encodeVarint(data, i, uint64(len(byts))) - 1
+		i = EncodeVarint(data, i, uint64(len(byts))) - 1
 		data[i] = 0xa
 	} else {
 		return 0, fmt.Errorf("invalid DAG-PB form (link must have a Hash)")
@@ -110,7 +110,7 @@ func (link *PBLink) marshal(data []byte) (int, error) {
 	return len(data) - i, nil
 }
 
-func (node *PBNode) validate() error {
+func (node *PBNode) Validate() error {
 	if node == nil {
 		return fmt.Errorf("PBNode not defined")
 	}
@@ -132,45 +132,45 @@ func (node *PBNode) validate() error {
 	return nil
 }
 
-func (link *PBLink) size() (n int) {
+func (link *PBLink) EncodedSize() (n int) {
 	if link == nil {
 		return 0
 	}
 	var l int
 	if link.Hash != nil {
 		l = link.Hash.ByteLen()
-		n += 1 + l + sizeOfVarint(uint64(l))
+		n += 1 + l + SizeOfVarint(uint64(l))
 	}
 	if link.Name != nil {
 		l = len(*link.Name)
-		n += 1 + l + sizeOfVarint(uint64(l))
+		n += 1 + l + SizeOfVarint(uint64(l))
 	}
 	if link.Tsize != nil {
-		n += 1 + sizeOfVarint(uint64(*link.Tsize))
+		n += 1 + SizeOfVarint(uint64(*link.Tsize))
 	}
 	return n
 }
 
-func (node *PBNode) size() (n int) {
+func (node *PBNode) EncodedSize() (n int) {
 	if node == nil {
 		return 0
 	}
 	var l int
 	if node.Data != nil {
 		l = len(node.Data)
-		n += 1 + l + sizeOfVarint(uint64(l))
+		n += 1 + l + SizeOfVarint(uint64(l))
 	}
 	if len(node.Links) > 0 {
 		for _, e := range node.Links {
-			l = e.size()
-			n += 1 + l + sizeOfVarint(uint64(l))
+			l = e.EncodedSize()
+			n += 1 + l + SizeOfVarint(uint64(l))
 		}
 	}
 	return n
 }
 
-func encodeVarint(data []byte, offset int, v uint64) int {
-	offset -= sizeOfVarint(v)
+func EncodeVarint(data []byte, offset int, v uint64) int {
+	offset -= SizeOfVarint(v)
 	base := offset
 	for v >= 1<<7 {
 		data[offset] = uint8(v&0x7f | 0x80)
@@ -181,6 +181,6 @@ func encodeVarint(data []byte, offset int, v uint64) int {
 	return base
 }
 
-func sizeOfVarint(x uint64) (n int) {
+func SizeOfVarint(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
