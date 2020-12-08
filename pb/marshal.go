@@ -8,7 +8,6 @@ import (
 	math_bits "math/bits"
 )
 
-// Marshal TODO
 func Marshal(out io.Writer, tokenSource func() (Token, error)) error {
 	writeLead := func(wire byte, size uint64) {
 		lead := make([]byte, SizeOfVarint(size)+1)

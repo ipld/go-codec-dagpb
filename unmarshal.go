@@ -10,13 +10,20 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// ErrIntOverflow is returned a varint overflows during decode, it indicates
+// malformed data
 var ErrIntOverflow = xerrors.Errorf("protobuf: varint overflow")
 
+// Unmarshal provides an IPLD codec decode interface for DAG-CBOR data. Provide
+// a compatible NodeAssembler and a byte source to unmarshal a DAG-CBOR IPLD
+// Node. Use the NodeAssembler from the PBNode type for safest construction
+// (Type.PBNode.NewBuilder()). A Map assembler will also work.
 func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
 	ma, err := na.BeginMap(2)
 	if err != nil {
 		return err
 	}
+	// always make "Links", even if we don't use it
 	if err = ma.AssembleKey().AssignString("Links"); err != nil {
 		return err
 	}
@@ -50,6 +57,8 @@ func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
 			if chunk, err = decodeBytes(reader); err != nil {
 				return err
 			}
+			// Data must come after Links, so it's safe to close this here even if we
+			// didn't use it
 			if err := links.Finish(); err != nil {
 				return err
 			}
@@ -192,6 +201,8 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 	return nil
 }
 
+// decode the lead for a PB chunk, fieldNum & wireType, that tells us which
+// field in the schema we're looking at and what data type it is
 func decodeKey(reader shared.SlickReader) (int, int, error) {
 	var wire uint64
 	var err error
@@ -203,6 +214,7 @@ func decodeKey(reader shared.SlickReader) (int, int, error) {
 	return fieldNum, wireType, nil
 }
 
+// decode a byte string from PB
 func decodeBytes(reader shared.SlickReader) ([]byte, error) {
 	bytesLen, err := decodeVarint(reader)
 	if err != nil {
@@ -215,6 +227,7 @@ func decodeBytes(reader shared.SlickReader) ([]byte, error) {
 	return byts, nil
 }
 
+// decode a varint from PB
 func decodeVarint(reader shared.SlickReader) (uint64, error) {
 	var v uint64
 	for shift := uint(0); ; shift += 7 {

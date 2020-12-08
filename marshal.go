@@ -19,6 +19,11 @@ type pbLink struct {
 	hasTsize bool
 }
 
+// Marshal provides an IPLD codec encode interface for DAG-CBOR data. Provide a
+// conforming Node and a destination for bytes to marshal a DAG-CBOR IPLD Node.
+// The Node must strictly conform to the DAG-CBOR schema
+// (https://github.com/ipld/specs/blob/master/block-layer/codecs/dag-cbor.md).
+// For safest use, build Nodes using the Type.PBNode type.
 func Marshal(inNode ipld.Node, out io.Writer) error {
 	// Wrap in a typed node for some basic schema form checking
 	builder := Type.PBNode.NewBuilder()
@@ -42,7 +47,7 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 				return err
 			}
 
-			{ // Hash
+			{ // Hash (required)
 				d, err := link.LookupByString("Hash")
 				if err != nil {
 					return err
@@ -56,13 +61,14 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 				}
 				cl, ok := l.(cidlink.Link)
 				if !ok {
-					// this _should_ be taken care of by the Typed conversion above "missing required fields: Hash"
+					// this _should_ be taken care of by the Typed conversion above with
+					// "missing required fields: Hash"
 					return xerrors.Errorf("invalid DAG-PB form (link must have a Hash)")
 				}
 				pbLinks[ii].hash = cl.Cid
 			}
 
-			{ // Name
+			{ // Name (optional)
 				nameNode, err := link.LookupByString("Name")
 				if err != nil {
 					return err
@@ -77,7 +83,7 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 				}
 			}
 
-			{ // Tsize
+			{ // Tsize (optional)
 				tsizeNode, err := link.LookupByString("Tsize")
 				if err != nil {
 					return err
@@ -97,11 +103,13 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 			}
 		} // for
 
+		// links must be strictly sorted by Name before encoding, leaving stable
+		// ordering where the names are the same (or absent)
 		sortLinks(pbLinks)
 		for _, link := range pbLinks {
 			size := link.encodedSize()
 			chunk := make([]byte, size+sizeOfVarint(uint64(size))+1)
-			chunk[0] = 0x12
+			chunk[0] = 0x12 // field & wire type for Links
 			offset := encodeVarint(chunk, 1, uint64(size))
 			wrote, err := link.marshal(chunk, offset)
 			if err != nil {
@@ -114,6 +122,7 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 		}
 	} // if links
 
+	// Data (optional)
 	data, err := node.LookupByString("Data")
 	if err != nil {
 		return err
@@ -125,7 +134,7 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 		}
 		size := uint64(len(byts))
 		lead := make([]byte, sizeOfVarint(size)+1)
-		lead[0] = 0xa
+		lead[0] = 0xa // field and wireType for Data
 		encodeVarint(lead, 1, size)
 		out.Write(lead)
 		out.Write(byts)
@@ -134,6 +143,7 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 	return nil
 }
 
+// predict the byte size of the encoded Link
 func (link pbLink) encodedSize() (n int) {
 	l := link.hash.ByteLen()
 	n += 1 + l + sizeOfVarint(uint64(l))
@@ -147,26 +157,33 @@ func (link pbLink) encodedSize() (n int) {
 	return n
 }
 
+// encode a Link to PB
 func (link pbLink) marshal(data []byte, offset int) (int, error) {
 	base := offset
-	data[offset] = 0xa
+	data[offset] = 0xa // field and wireType for Hash
 	byts := link.hash.Bytes()
 	offset = encodeVarint(data, offset+1, uint64(len(byts)))
 	copy(data[offset:], byts)
 	offset += len(byts)
 	if link.hasName {
-		data[offset] = 0x12
+		data[offset] = 0x12 // field and wireType for Name
 		offset = encodeVarint(data, offset+1, uint64(len(link.name)))
 		copy(data[offset:], link.name)
 		offset += len(link.name)
 	}
 	if link.hasTsize {
-		data[offset] = 0x18
+		data[offset] = 0x18 // field and wireType for Tsize
 		offset = encodeVarint(data, offset+1, uint64(link.tsize))
 	}
 	return offset - base, nil
 }
 
+// predict the size of a varint for PB before creating it
+func sizeOfVarint(x uint64) (n int) {
+	return (math_bits.Len64(x|1) + 6) / 7
+}
+
+// encode a varint to a PB chunk
 func encodeVarint(data []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		data[offset] = uint8(v&0x7f | 0x80)
@@ -177,6 +194,7 @@ func encodeVarint(data []byte, offset int, v uint64) int {
 	return offset + 1
 }
 
+// stable sorting of Links using the strict sorting rules
 func sortLinks(links []pbLink) {
 	sort.Stable(pbLinkSlice(links))
 }
@@ -189,8 +207,4 @@ func (ls pbLinkSlice) Less(a, b int) bool { return pbLinkLess(ls[a], ls[b]) }
 
 func pbLinkLess(a pbLink, b pbLink) bool {
 	return a.name < b.name
-}
-
-func sizeOfVarint(x uint64) (n int) {
-	return (math_bits.Len64(x|1) + 6) / 7
 }

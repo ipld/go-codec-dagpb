@@ -96,7 +96,7 @@ func runTest(t *testing.T, bytsHex string, expected pbNode) {
 
 	roundTrip := func(t *testing.T, node ipld.Node) {
 		var buf bytes.Buffer
-		if err := Marshal(node, &buf); err != nil {
+		if err := Encoder(node, &buf); err != nil {
 			t.Fatal(err)
 		}
 
@@ -108,7 +108,7 @@ func runTest(t *testing.T, bytsHex string, expected pbNode) {
 
 	t.Run("basicnode", func(t *testing.T) {
 		nb := basicnode.Prototype__Map{}.NewBuilder()
-		err := Unmarshal(nb, bytes.NewReader(byts))
+		err := Decoder(nb, bytes.NewReader(byts))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -120,7 +120,7 @@ func runTest(t *testing.T, bytsHex string, expected pbNode) {
 
 	t.Run("typed", func(t *testing.T) {
 		nb := Type.PBNode.NewBuilder()
-		err := Unmarshal(nb, bytes.NewReader(byts))
+		err := Decoder(nb, bytes.NewReader(byts))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -180,11 +180,69 @@ func TestNodeWithTwoUnsortedLinks(t *testing.T) {
 	})
 
 	var buf bytes.Buffer
-	if err := Marshal(node, &buf); err != nil {
+	if err := Encoder(node, &buf); err != nil {
 		t.Fatal(err)
 	}
 	if hex.EncodeToString(buf.Bytes()) != encoded {
 		t.Fatal("did not encode to expected bytes")
+	}
+}
+
+func TestNodeWithStableSortedLinks(t *testing.T) {
+	cids := []string{
+		"QmUGhP2X8xo9dsj45vqx1H6i5WqPqLqmLQsHTTxd3ke8mp",
+		"QmP7SrR76KHK9A916RbHG1ufy2TzNABZgiE23PjZDMzZXy",
+		"QmQg1v4o9xdT3Q14wh4S7dxZkDjyZ9ssFzFzyep1YrVJBY",
+		"QmdP6fartWRrydZCUjHgrJ4XpxSE4SAoRsWJZ1zJ4MWiuf",
+		"QmNNjUStxtMC1WaSZYiDW6CmAUrvd5Q2e17qnxPgVdwrwW",
+		"QmWJwqZBJWerHsN1b7g4pRDYmzGNnaMYuD3KSbnpaxsB2h",
+		"QmRXPSdysBS3dbUXe6w8oXevZWHdPQWaR2d3fggNsjvieL",
+		"QmTUZAXfws6zrhEksnMqLxsbhXZBQs4FNiarjXSYQqVrjC",
+		"QmNNk7dTdh8UofwgqLNauq6N78DPc6LKK2yBs1MFdx7Mbg",
+		"QmW5mrJfyqh7B4ywSvraZgnWjS3q9CLiYURiJpCX3aro5i",
+		"QmTFHZL5CkgNz19MdPnSuyLAi6AVq9fFp81zmPpaL2amED",
+	}
+
+	node := fluent.MustBuildMap(basicnode.Prototype__Map{}, 2, func(fma fluent.MapAssembler) {
+		fma.AssembleEntry("Data").AssignBytes([]byte("some data"))
+		fma.AssembleEntry("Links").CreateList(len(cids), func(fla fluent.ListAssembler) {
+			for _, cid := range cids {
+				fla.AssembleValue().CreateMap(3, func(fma fluent.MapAssembler) {
+					fma.AssembleEntry("Name").AssignString("")
+					fma.AssembleEntry("Tsize").AssignInt(262158)
+					fma.AssembleEntry("Hash").AssignLink(cidlink.Link{Cid: mkcid(t, cid)})
+				})
+			}
+		})
+	})
+
+	var buf bytes.Buffer
+	if err := Encoder(node, &buf); err != nil {
+		t.Fatal(err)
+	}
+	nb := basicnode.Prototype__Map{}.NewBuilder()
+	err := Decoder(nb, bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	reencNode := nb.Build()
+	links, _ := reencNode.LookupByString("Links")
+	if links.Length() != len(cids) {
+		t.Fatal("Incorrect number of links after round-trip")
+	}
+	iter := links.ListIterator()
+	for !iter.Done() {
+		ii, n, _ := iter.Next()
+		h, _ := n.LookupByString("Hash")
+		l, _ := h.AsLink()
+		cl, _ := l.(cidlink.Link)
+		if cids[ii] != cl.String() {
+			t.Fatal("CIDs did not retain position after round-trip")
+		}
+	}
+
+	if hex.EncodeToString(buf.Bytes()) != "122a0a2212205822d187bd40b04cc8ae7437888ebf844efac1729e098c8816d585d0fcc42b5b1200188e8010122a0a2212200b79badee10dc3f7781a7a9d0f020cc0f710b328c4975c2dbc30a170cd188e2c1200188e8010122a0a22122022ad631c69ee983095b5b8acd029ff94aff1dc6c48837878589a92b90dfea3171200188e8010122a0a221220df7fd08c4784fe6938c640df473646e4f16c7d0c6567ab79ec6981767fc3f01a1200188e8010122a0a22122000888c815ad7d055377bdb7b7779fc9740e548cb5dac90c71b9af9f51a879c2d1200188e8010122a0a221220766db372d015c5c700f538336556370165c889334791487a5e48d6080f1c99ea1200188e8010122a0a2212202f533004ceed74279b32c58eb0e3d2a23bc27ba14ab07298406c42bab8d543211200188e8010122a0a2212204c50cfdefa0209766f885919ac8ffc258e9253c3001ac23814f875d414d394731200188e8010122a0a22122000894611dfa192853020cbbade1a9a0a3f359d26e0d38caf4d72b9b306ff5a0b1200188e8010122a0a221220730ddba83e3147bbe10780b97ff0718c74c36037b97b3b79b45c4511806545811200188e8010122a0a22122048ea9d5d423f678d83d559d2349be8325527290b070c90fc1acd968f0bf70a061200188e80100a09736f6d652064617461" {
+		t.Fatal("Encoded form did not match expected")
 	}
 }
 
