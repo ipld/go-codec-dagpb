@@ -7,9 +7,15 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/fluent"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	basicnode "github.com/ipld/go-ipld-prime/node/basic"
-	pb "github.com/rvagg/go-dagpb/pb"
 )
+
+type pbNode struct {
+	links []pbLink
+	data  []byte
+}
 
 func mkcid(t *testing.T, cidStr string) cid.Cid {
 	c, err := cid.Decode(cidStr)
@@ -19,7 +25,7 @@ func mkcid(t *testing.T, cidStr string) cid.Cid {
 	return c
 }
 
-func validate(t *testing.T, actual ipld.Node, expected *pb.PBNode) {
+func validate(t *testing.T, actual ipld.Node, expected pbNode) {
 	mi := actual.MapIterator()
 	_, isTyped := actual.(*_PBNode)
 
@@ -44,12 +50,12 @@ func validate(t *testing.T, actual ipld.Node, expected *pb.PBNode) {
 			if val.IsNull() {
 				t.Fatal("Links is null")
 			}
-			if val.Length() != len(expected.Links) {
+			if val.Length() != len(expected.links) {
 				t.Fatal("non-empty Links list")
 			}
 			hasLinks = true
 		} else if keyStr == "Data" {
-			if isTyped && expected.Data == nil {
+			if isTyped && expected.data == nil {
 				if !val.IsAbsent() {
 					t.Fatalf("Empty Data is not marked as absent")
 				}
@@ -62,13 +68,13 @@ func validate(t *testing.T, actual ipld.Node, expected *pb.PBNode) {
 			}
 			hasData = !isTyped || !val.IsAbsent()
 			if hasData {
-				if expected.Data == nil {
+				if expected.data == nil {
 					t.Fatal("Got unexpected Data")
 				} else {
 					byts, err := val.AsBytes()
 					if err != nil {
 						t.Fatal(err)
-					} else if bytes.Compare(expected.Data, byts) != 0 {
+					} else if bytes.Compare(expected.data, byts) != 0 {
 						t.Fatal("Got unexpected Data contents")
 					}
 				}
@@ -80,12 +86,12 @@ func validate(t *testing.T, actual ipld.Node, expected *pb.PBNode) {
 	if !hasLinks {
 		t.Fatal("Did not find Links")
 	}
-	if expected.Data != nil && !hasData {
+	if expected.data != nil && !hasData {
 		t.Fatal("Did not find Data")
 	}
 }
 
-func runTest(t *testing.T, bytsHex string, expected *pb.PBNode) {
+func runTest(t *testing.T, bytsHex string, expected pbNode) {
 	byts, _ := hex.DecodeString(bytsHex)
 
 	roundTrip := func(t *testing.T, node ipld.Node) {
@@ -125,51 +131,74 @@ func runTest(t *testing.T, bytsHex string, expected *pb.PBNode) {
 }
 
 func TestEmptyNode(t *testing.T) {
-	runTest(t, "", pb.NewPBNode())
+	runTest(t, "", pbNode{})
 }
 
 func TestNodeWithData(t *testing.T) {
-	runTest(t, "0a050001020304", pb.NewPBNodeFromData([]byte{00, 01, 02, 03, 04}))
+	runTest(t, "0a050001020304", pbNode{data: []byte{00, 01, 02, 03, 04}})
 }
 
 func TestNodeWithDataZero(t *testing.T) {
-	runTest(t, "0a00", pb.NewPBNodeFromData([]byte{}))
+	runTest(t, "0a00", pbNode{data: []byte{}})
 }
 
 func TestNodeWithLink(t *testing.T) {
-	expected := pb.NewPBNode()
-	expected.Links = append(expected.Links, pb.NewPBLinkFromCid(mkcid(t, "QmWDtUQj38YLW8v3q4A6LwPn4vYKEbuKWpgSm6bjKW6Xfe")))
+	expected := pbNode{}
+	expected.links = append(expected.links, pbLink{hash: mkcid(t, "QmWDtUQj38YLW8v3q4A6LwPn4vYKEbuKWpgSm6bjKW6Xfe")})
 	runTest(t, "12240a2212207521fe19c374a97759226dc5c0c8e674e73950e81b211f7dd3b6b30883a08a51", expected)
 }
 
 func TestNodeWithLinkAndData(t *testing.T) {
-	expected := pb.NewPBNodeFromData([]byte("some data"))
-	expected.Links = append(expected.Links, pb.NewPBLinkFromCid(mkcid(t, "QmWDtUQj38YLW8v3q4A6LwPn4vYKEbuKWpgSm6bjKW6Xfe")))
+	expected := pbNode{data: []byte("some data")}
+	expected.links = append(expected.links, pbLink{hash: mkcid(t, "QmWDtUQj38YLW8v3q4A6LwPn4vYKEbuKWpgSm6bjKW6Xfe")})
 	runTest(t, "12240a2212207521fe19c374a97759226dc5c0c8e674e73950e81b211f7dd3b6b30883a08a510a09736f6d652064617461", expected)
 }
 
 func TestNodeWithTwoUnsortedLinks(t *testing.T) {
-	expected := pb.NewPBNodeFromData([]byte("some data"))
-	expected.Links = append(expected.Links, pb.NewPBLink("some link", mkcid(t, "QmXg9Pp2ytZ14xgmQjYEiHjVjMFXzCVVEcRTWJBmLgR39U"), 100000000))
-	expected.Links = append(expected.Links, pb.NewPBLink("some other link", mkcid(t, "QmXg9Pp2ytZ14xgmQjYEiHjVjMFXzCVVEcRTWJBmLgR39V"), 8))
+	encoded := "12340a2212208ab7a6c5e74737878ac73863cb76739d15d4666de44e5756bf55a2f9e9ab5f431209736f6d65206c696e6b1880c2d72f12370a2212208ab7a6c5e74737878ac73863cb76739d15d4666de44e5756bf55a2f9e9ab5f44120f736f6d65206f74686572206c696e6b18080a09736f6d652064617461"
+	expected := pbNode{data: []byte("some data")}
+	expected.links = append(expected.links, pbLink{name: "some link", hasName: true, hash: mkcid(t, "QmXg9Pp2ytZ14xgmQjYEiHjVjMFXzCVVEcRTWJBmLgR39U"), tsize: 100000000, hasTsize: true})
+	expected.links = append(expected.links, pbLink{name: "some other link", hasName: true, hash: mkcid(t, "QmXg9Pp2ytZ14xgmQjYEiHjVjMFXzCVVEcRTWJBmLgR39V"), tsize: 8, hasTsize: true})
 
-	runTest(
-		t,
-		"12340a2212208ab7a6c5e74737878ac73863cb76739d15d4666de44e5756bf55a2f9e9ab5f431209736f6d65206c696e6b1880c2d72f12370a2212208ab7a6c5e74737878ac73863cb76739d15d4666de44e5756bf55a2f9e9ab5f44120f736f6d65206f74686572206c696e6b18080a09736f6d652064617461",
-		expected)
+	runTest(t, encoded, expected)
+
+	// assembled in a rough order, Data coming first, links badly sorted
+	node := fluent.MustBuildMap(basicnode.Prototype__Map{}, 2, func(fma fluent.MapAssembler) {
+		fma.AssembleEntry("Data").AssignBytes([]byte("some data"))
+		fma.AssembleEntry("Links").CreateList(2, func(fla fluent.ListAssembler) {
+			fla.AssembleValue().CreateMap(3, func(fma fluent.MapAssembler) {
+				fma.AssembleEntry("Name").AssignString("some other link")
+				fma.AssembleEntry("Tsize").AssignInt(8)
+				fma.AssembleEntry("Hash").AssignLink(cidlink.Link{Cid: mkcid(t, "QmXg9Pp2ytZ14xgmQjYEiHjVjMFXzCVVEcRTWJBmLgR39V")})
+			})
+			fla.AssembleValue().CreateMap(3, func(fma fluent.MapAssembler) {
+				fma.AssembleEntry("Name").AssignString("some link")
+				fma.AssembleEntry("Tsize").AssignInt(100000000)
+				fma.AssembleEntry("Hash").AssignLink(cidlink.Link{Cid: mkcid(t, "QmXg9Pp2ytZ14xgmQjYEiHjVjMFXzCVVEcRTWJBmLgR39U")})
+			})
+		})
+	})
+
+	var buf bytes.Buffer
+	if err := Marshal(node, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if hex.EncodeToString(buf.Bytes()) != encoded {
+		t.Fatal("did not encode to expected bytes")
+	}
 }
 
 func TestNodeWithUnnamedLinks(t *testing.T) {
 	dataByts, _ := hex.DecodeString("080218cbc1819201208080e015208080e015208080e015208080e015208080e015208080e01520cbc1c10f")
-	expected := pb.NewPBNodeFromData(dataByts)
-	expected.Links = []*pb.PBLink{
-		pb.NewPBLink("", mkcid(t, "QmSbCgdsX12C4KDw3PDmpBN9iCzS87a5DjgSCoW9esqzXk"), 45623854),
-		pb.NewPBLink("", mkcid(t, "Qma4GxWNhywSvWFzPKtEswPGqeZ9mLs2Kt76JuBq9g3fi2"), 45623854),
-		pb.NewPBLink("", mkcid(t, "QmQfyxyys7a1e3mpz9XsntSsTGc8VgpjPj5BF1a1CGdGNc"), 45623854),
-		pb.NewPBLink("", mkcid(t, "QmSh2wTTZT4N8fuSeCFw7wterzdqbE93j1XDhfN3vQHzDV"), 45623854),
-		pb.NewPBLink("", mkcid(t, "QmVXsSVjwxMsCwKRCUxEkGb4f4B98gXVy3ih3v4otvcURK"), 45623854),
-		pb.NewPBLink("", mkcid(t, "QmZjhH97MEYwQXzCqSQbdjGDhXWuwW4RyikR24pNqytWLj"), 45623854),
-		pb.NewPBLink("", mkcid(t, "QmRs6U5YirCqC7taTynz3x2GNaHJZ3jDvMVAzaiXppwmNJ"), 32538395),
+	expected := pbNode{data: dataByts}
+	expected.links = []pbLink{
+		{name: "", hasName: true, hash: mkcid(t, "QmSbCgdsX12C4KDw3PDmpBN9iCzS87a5DjgSCoW9esqzXk"), tsize: 45623854, hasTsize: true},
+		{name: "", hasName: true, hash: mkcid(t, "Qma4GxWNhywSvWFzPKtEswPGqeZ9mLs2Kt76JuBq9g3fi2"), tsize: 45623854, hasTsize: true},
+		{name: "", hasName: true, hash: mkcid(t, "QmQfyxyys7a1e3mpz9XsntSsTGc8VgpjPj5BF1a1CGdGNc"), tsize: 45623854, hasTsize: true},
+		{name: "", hasName: true, hash: mkcid(t, "QmSh2wTTZT4N8fuSeCFw7wterzdqbE93j1XDhfN3vQHzDV"), tsize: 45623854, hasTsize: true},
+		{name: "", hasName: true, hash: mkcid(t, "QmVXsSVjwxMsCwKRCUxEkGb4f4B98gXVy3ih3v4otvcURK"), tsize: 45623854, hasTsize: true},
+		{name: "", hasName: true, hash: mkcid(t, "QmZjhH97MEYwQXzCqSQbdjGDhXWuwW4RyikR24pNqytWLj"), tsize: 45623854, hasTsize: true},
+		{name: "", hasName: true, hash: mkcid(t, "QmRs6U5YirCqC7taTynz3x2GNaHJZ3jDvMVAzaiXppwmNJ"), tsize: 32538395, hasTsize: true},
 	}
 
 	runTest(
@@ -180,12 +209,12 @@ func TestNodeWithUnnamedLinks(t *testing.T) {
 
 func TestNodeWithNamedLinks(t *testing.T) {
 	dataByts, _ := hex.DecodeString("0801")
-	expected := pb.NewPBNodeFromData(dataByts)
-	expected.Links = []*pb.PBLink{
-		pb.NewPBLink("audio_only.m4a", mkcid(t, "QmaUAwAQJNtvUdJB42qNbTTgDpzPYD1qdsKNtctM5i7DGB"), 23319629),
-		pb.NewPBLink("chat.txt", mkcid(t, "QmNVrxbB25cKTRuKg2DuhUmBVEK9NmCwWEHtsHPV6YutHw"), 996),
-		pb.NewPBLink("playback.m3u", mkcid(t, "QmUcjKzDLXBPmB6BKHeKSh6ZoFZjss4XDhMRdLYRVuvVfu"), 116),
-		pb.NewPBLink("zoom_0.mp4", mkcid(t, "QmQqy2SiEkKgr2cw5UbQ93TtLKEMsD8TdcWggR8q9JabjX"), 306281879),
+	expected := pbNode{data: dataByts}
+	expected.links = []pbLink{
+		{name: "audio_only.m4a", hasName: true, hash: mkcid(t, "QmaUAwAQJNtvUdJB42qNbTTgDpzPYD1qdsKNtctM5i7DGB"), tsize: 23319629, hasTsize: true},
+		{name: "chat.txt", hasName: true, hash: mkcid(t, "QmNVrxbB25cKTRuKg2DuhUmBVEK9NmCwWEHtsHPV6YutHw"), tsize: 996, hasTsize: true},
+		{name: "playback.m3u", hasName: true, hash: mkcid(t, "QmUcjKzDLXBPmB6BKHeKSh6ZoFZjss4XDhMRdLYRVuvVfu"), tsize: 116, hasTsize: true},
+		{name: "zoom_0.mp4", hasName: true, hash: mkcid(t, "QmQqy2SiEkKgr2cw5UbQ93TtLKEMsD8TdcWggR8q9JabjX"), tsize: 306281879, hasTsize: true},
 	}
 
 	runTest(
