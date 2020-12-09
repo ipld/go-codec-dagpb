@@ -5,7 +5,6 @@ package dagpb
 import (
 	ipld "github.com/ipld/go-ipld-prime"
 )
-
 var _ ipld.Node = nil // suppress errors when this dependency is not referenced
 // Type is a struct embeding a NodePrototype/Type for every Node implementation in this package.
 // One of its major uses is to start the construction of a value.
@@ -20,20 +19,20 @@ var _ ipld.Node = nil // suppress errors when this dependency is not referenced
 var Type typeSlab
 
 type typeSlab struct {
-	Bytes         _Bytes__Prototype
-	Bytes__Repr   _Bytes__ReprPrototype
-	Int           _Int__Prototype
-	Int__Repr     _Int__ReprPrototype
-	Link          _Link__Prototype
-	Link__Repr    _Link__ReprPrototype
-	PBLink        _PBLink__Prototype
-	PBLink__Repr  _PBLink__ReprPrototype
+	Bytes       _Bytes__Prototype
+	Bytes__Repr _Bytes__ReprPrototype
+	Int       _Int__Prototype
+	Int__Repr _Int__ReprPrototype
+	Link       _Link__Prototype
+	Link__Repr _Link__ReprPrototype
+	PBLink       _PBLink__Prototype
+	PBLink__Repr _PBLink__ReprPrototype
 	PBLinks       _PBLinks__Prototype
 	PBLinks__Repr _PBLinks__ReprPrototype
-	PBNode        _PBNode__Prototype
-	PBNode__Repr  _PBNode__ReprPrototype
-	String        _String__Prototype
-	String__Repr  _String__ReprPrototype
+	PBNode       _PBNode__Prototype
+	PBNode__Repr _PBNode__ReprPrototype
+	String       _String__Prototype
+	String__Repr _String__ReprPrototype
 }
 
 // --- type definitions follow ---
@@ -53,8 +52,8 @@ type _Link struct{ x ipld.Link }
 // PBLink matches the IPLD Schema type "PBLink".  It has Struct type-kind, and may be interrogated like map kind.
 type PBLink = *_PBLink
 type _PBLink struct {
-	Hash  _Link
-	Name  _String__Maybe
+	Hash _Link
+	Name _String__Maybe
 	Tsize _Int__Maybe
 }
 
@@ -68,9 +67,10 @@ type _PBLinks struct {
 type PBNode = *_PBNode
 type _PBNode struct {
 	Links _PBLinks
-	Data  _Bytes__Maybe
+	Data _Bytes__Maybe
 }
 
 // String matches the IPLD Schema type "String".  It has string kind.
 type String = *_String
 type _String struct{ x string }
+

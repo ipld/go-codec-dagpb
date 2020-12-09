@@ -1,16 +1,18 @@
+// +build ignore
+
 package main
 
 // based on https://github.com/ipld/go-ipld-prime-proto/blob/master/gen/main.go
 
 import (
-	"os/exec"
+	"fmt"
+	"os"
 
 	"github.com/ipld/go-ipld-prime/schema"
 	gengo "github.com/ipld/go-ipld-prime/schema/gen/go"
 )
 
 func main() {
-
 	ts := schema.TypeSystem{}
 	ts.Init()
 	adjCfg := &gengo.AdjunctCfg{}
@@ -55,8 +57,12 @@ func main() {
 		schema.SpawnStructRepresentationMap(nil),
 	))
 
-	// note in scope: ts.Accumulate(schema.SpawnBytes("RawNode"))
+	if errs := ts.ValidateGraph(); errs != nil {
+		for _, err := range errs {
+			fmt.Printf("- %s\n", err)
+		}
+		os.Exit(1)
+	}
 
-	gengo.Generate("./", pkgName, ts, adjCfg)
-	exec.Command("go", "fmt").Run()
+	gengo.Generate(".", pkgName, ts, adjCfg)
 }
