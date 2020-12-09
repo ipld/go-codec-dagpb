@@ -5,8 +5,8 @@ import (
 
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/codec/codectools/scratch"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/polydawn/refmt/shared"
 	"golang.org/x/xerrors"
 )
 
@@ -33,7 +33,8 @@ func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
 	}
 
 	haveData := false
-	reader := shared.NewReader(in)
+	var reader scratch.Reader
+	reader.Init(in)
 	for {
 		_, err := reader.Readn1()
 		if err == io.EOF {
@@ -83,7 +84,7 @@ func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
 			if err != nil {
 				return err
 			}
-			if err = unmarshalLink(reader, int(bytesLen), curLink); err != nil {
+			if err = unmarshalLink(reader, bytesLen, curLink); err != nil {
 				return err
 			}
 			if err := curLink.Finish(); err != nil {
@@ -102,16 +103,16 @@ func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
 	return ma.Finish()
 }
 
-func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) error {
+func unmarshalLink(reader scratch.Reader, length uint64, ma ipld.MapAssembler) error {
 	haveHash := false
 	haveName := false
 	haveTsize := false
 	startOffset := reader.NumRead()
 	for {
 		readBytes := reader.NumRead() - startOffset
-		if readBytes == length {
+		if readBytes == int64(length) {
 			break
-		} else if readBytes > length {
+		} else if readBytes > int64(length) {
 			return xerrors.Errorf("protobuf: (PBLink) bad length for link")
 		}
 		fieldNum, wireType, err := decodeKey(reader)
@@ -203,7 +204,7 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 
 // decode the lead for a PB chunk, fieldNum & wireType, that tells us which
 // field in the schema we're looking at and what data type it is
-func decodeKey(reader shared.SlickReader) (int, int, error) {
+func decodeKey(reader scratch.Reader) (int, int, error) {
 	var wire uint64
 	var err error
 	if wire, err = decodeVarint(reader); err != nil {
@@ -215,7 +216,7 @@ func decodeKey(reader shared.SlickReader) (int, int, error) {
 }
 
 // decode a byte string from PB
-func decodeBytes(reader shared.SlickReader) ([]byte, error) {
+func decodeBytes(reader scratch.Reader) ([]byte, error) {
 	bytesLen, err := decodeVarint(reader)
 	if err != nil {
 		return nil, err
@@ -228,7 +229,7 @@ func decodeBytes(reader shared.SlickReader) ([]byte, error) {
 }
 
 // decode a varint from PB
-func decodeVarint(reader shared.SlickReader) (uint64, error) {
+func decodeVarint(reader scratch.Reader) (uint64, error) {
 	var v uint64
 	for shift := uint(0); ; shift += 7 {
 		if shift >= 64 {
