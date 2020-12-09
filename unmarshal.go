@@ -14,8 +14,8 @@ import (
 // malformed data
 var ErrIntOverflow = xerrors.Errorf("protobuf: varint overflow")
 
-// Unmarshal provides an IPLD codec decode interface for DAG-CBOR data. Provide
-// a compatible NodeAssembler and a byte source to unmarshal a DAG-CBOR IPLD
+// Unmarshal provides an IPLD codec decode interface for DAG-PB data. Provide
+// a compatible NodeAssembler and a byte source to unmarshal a DAG-PB IPLD
 // Node. Use the NodeAssembler from the PBNode type for safest construction
 // (Type.PBNode.NewBuilder()). A Map assembler will also work.
 func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {

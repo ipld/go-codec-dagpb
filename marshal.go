@@ -19,10 +19,10 @@ type pbLink struct {
 	hasTsize bool
 }
 
-// Marshal provides an IPLD codec encode interface for DAG-CBOR data. Provide a
-// conforming Node and a destination for bytes to marshal a DAG-CBOR IPLD Node.
-// The Node must strictly conform to the DAG-CBOR schema
-// (https://github.com/ipld/specs/blob/master/block-layer/codecs/dag-cbor.md).
+// Marshal provides an IPLD codec encode interface for DAG-PB data. Provide a
+// conforming Node and a destination for bytes to marshal a DAG-PB IPLD Node.
+// The Node must strictly conform to the DAG-PB schema
+// (https://github.com/ipld/specs/blob/master/block-layer/codecs/dag-pb.md).
 // For safest use, build Nodes using the Type.PBNode type.
 func Marshal(inNode ipld.Node, out io.Writer) error {
 	// Wrap in a typed node for some basic schema form checking
