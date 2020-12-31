@@ -50,8 +50,8 @@ func (m MaybeBytes) Must() Bytes {
 }
 var _ ipld.Node = (Bytes)(&_Bytes{})
 var _ schema.TypedNode = (Bytes)(&_Bytes{})
-func (Bytes) ReprKind() ipld.ReprKind {
-	return ipld.ReprKind_Bytes
+func (Bytes) Kind() ipld.Kind {
+	return ipld.Kind_Bytes
 }
 func (Bytes) LookupByString(string) (ipld.Node, error) {
 	return mixins.Bytes{"dagpb.Bytes"}.LookupByString("")
@@ -59,7 +59,7 @@ func (Bytes) LookupByString(string) (ipld.Node, error) {
 func (Bytes) LookupByNode(ipld.Node) (ipld.Node, error) {
 	return mixins.Bytes{"dagpb.Bytes"}.LookupByNode(nil)
 }
-func (Bytes) LookupByIndex(idx int) (ipld.Node, error) {
+func (Bytes) LookupByIndex(idx int64) (ipld.Node, error) {
 	return mixins.Bytes{"dagpb.Bytes"}.LookupByIndex(0)
 }
 func (Bytes) LookupBySegment(seg ipld.PathSegment) (ipld.Node, error) {
@@ -71,7 +71,7 @@ func (Bytes) MapIterator() ipld.MapIterator {
 func (Bytes) ListIterator() ipld.ListIterator {
 	return nil
 }
-func (Bytes) Length() int {
+func (Bytes) Length() int64 {
 	return -1
 }
 func (Bytes) IsAbsent() bool {
@@ -83,7 +83,7 @@ func (Bytes) IsNull() bool {
 func (Bytes) AsBool() (bool, error) {
 	return mixins.Bytes{"dagpb.Bytes"}.AsBool()
 }
-func (Bytes) AsInt() (int, error) {
+func (Bytes) AsInt() (int64, error) {
 	return mixins.Bytes{"dagpb.Bytes"}.AsInt()
 }
 func (Bytes) AsFloat() (float64, error) {
@@ -128,10 +128,10 @@ type _Bytes__Assembler struct {
 }
 
 func (na *_Bytes__Assembler) reset() {}
-func (_Bytes__Assembler) BeginMap(sizeHint int) (ipld.MapAssembler, error) {
+func (_Bytes__Assembler) BeginMap(sizeHint int64) (ipld.MapAssembler, error) {
 	return mixins.BytesAssembler{"dagpb.Bytes"}.BeginMap(0)
 }
-func (_Bytes__Assembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (_Bytes__Assembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	return mixins.BytesAssembler{"dagpb.Bytes"}.BeginList(0)
 }
 func (na *_Bytes__Assembler) AssignNull() error {
@@ -149,7 +149,7 @@ func (na *_Bytes__Assembler) AssignNull() error {
 func (_Bytes__Assembler) AssignBool(bool) error {
 	return mixins.BytesAssembler{"dagpb.Bytes"}.AssignBool(false)
 }
-func (_Bytes__Assembler) AssignInt(int) error {
+func (_Bytes__Assembler) AssignInt(int64) error {
 	return mixins.BytesAssembler{"dagpb.Bytes"}.AssignInt(0)
 }
 func (_Bytes__Assembler) AssignFloat(float64) error {
@@ -173,7 +173,7 @@ func (na *_Bytes__Assembler) AssignBytes(v []byte) error {
 func (_Bytes__Assembler) AssignLink(ipld.Link) error {
 	return mixins.BytesAssembler{"dagpb.Bytes"}.AssignLink(nil)
 }
-func (na *_Bytes__Assembler) AssignNode(v ipld.Node) error {
+func (na *_Bytes__Assembler) ConvertFrom(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -211,10 +211,10 @@ var _ ipld.Node = &_Bytes__Repr{}
 type _Bytes__ReprPrototype = _Bytes__Prototype
 type _Bytes__ReprAssembler = _Bytes__Assembler
 
-func (n Int) Int() int {
+func (n Int) Int() int64 {
 	return n.x
 }
-func (_Int__Prototype) FromInt(v int) (Int, error) {
+func (_Int__Prototype) FromInt(v int64) (Int, error) {
 	n := _Int{v}
 	return &n, nil
 }
@@ -253,8 +253,8 @@ func (m MaybeInt) Must() Int {
 }
 var _ ipld.Node = (Int)(&_Int{})
 var _ schema.TypedNode = (Int)(&_Int{})
-func (Int) ReprKind() ipld.ReprKind {
-	return ipld.ReprKind_Int
+func (Int) Kind() ipld.Kind {
+	return ipld.Kind_Int
 }
 func (Int) LookupByString(string) (ipld.Node, error) {
 	return mixins.Int{"dagpb.Int"}.LookupByString("")
@@ -262,7 +262,7 @@ func (Int) LookupByString(string) (ipld.Node, error) {
 func (Int) LookupByNode(ipld.Node) (ipld.Node, error) {
 	return mixins.Int{"dagpb.Int"}.LookupByNode(nil)
 }
-func (Int) LookupByIndex(idx int) (ipld.Node, error) {
+func (Int) LookupByIndex(idx int64) (ipld.Node, error) {
 	return mixins.Int{"dagpb.Int"}.LookupByIndex(0)
 }
 func (Int) LookupBySegment(seg ipld.PathSegment) (ipld.Node, error) {
@@ -274,7 +274,7 @@ func (Int) MapIterator() ipld.MapIterator {
 func (Int) ListIterator() ipld.ListIterator {
 	return nil
 }
-func (Int) Length() int {
+func (Int) Length() int64 {
 	return -1
 }
 func (Int) IsAbsent() bool {
@@ -286,7 +286,7 @@ func (Int) IsNull() bool {
 func (Int) AsBool() (bool, error) {
 	return mixins.Int{"dagpb.Int"}.AsBool()
 }
-func (n Int) AsInt() (int, error) {
+func (n Int) AsInt() (int64, error) {
 	return n.x, nil
 }
 func (Int) AsFloat() (float64, error) {
@@ -331,10 +331,10 @@ type _Int__Assembler struct {
 }
 
 func (na *_Int__Assembler) reset() {}
-func (_Int__Assembler) BeginMap(sizeHint int) (ipld.MapAssembler, error) {
+func (_Int__Assembler) BeginMap(sizeHint int64) (ipld.MapAssembler, error) {
 	return mixins.IntAssembler{"dagpb.Int"}.BeginMap(0)
 }
-func (_Int__Assembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (_Int__Assembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	return mixins.IntAssembler{"dagpb.Int"}.BeginList(0)
 }
 func (na *_Int__Assembler) AssignNull() error {
@@ -352,7 +352,7 @@ func (na *_Int__Assembler) AssignNull() error {
 func (_Int__Assembler) AssignBool(bool) error {
 	return mixins.IntAssembler{"dagpb.Int"}.AssignBool(false)
 }
-func (na *_Int__Assembler) AssignInt(v int) error {
+func (na *_Int__Assembler) AssignInt(v int64) error {
 	switch *na.m {
 	case schema.Maybe_Value, schema.Maybe_Null:
 		panic("invalid state: cannot assign into assembler that's already finished")
@@ -376,7 +376,7 @@ func (_Int__Assembler) AssignBytes([]byte) error {
 func (_Int__Assembler) AssignLink(ipld.Link) error {
 	return mixins.IntAssembler{"dagpb.Int"}.AssignLink(nil)
 }
-func (na *_Int__Assembler) AssignNode(v ipld.Node) error {
+func (na *_Int__Assembler) ConvertFrom(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -456,8 +456,8 @@ func (m MaybeLink) Must() Link {
 }
 var _ ipld.Node = (Link)(&_Link{})
 var _ schema.TypedNode = (Link)(&_Link{})
-func (Link) ReprKind() ipld.ReprKind {
-	return ipld.ReprKind_Link
+func (Link) Kind() ipld.Kind {
+	return ipld.Kind_Link
 }
 func (Link) LookupByString(string) (ipld.Node, error) {
 	return mixins.Link{"dagpb.Link"}.LookupByString("")
@@ -465,7 +465,7 @@ func (Link) LookupByString(string) (ipld.Node, error) {
 func (Link) LookupByNode(ipld.Node) (ipld.Node, error) {
 	return mixins.Link{"dagpb.Link"}.LookupByNode(nil)
 }
-func (Link) LookupByIndex(idx int) (ipld.Node, error) {
+func (Link) LookupByIndex(idx int64) (ipld.Node, error) {
 	return mixins.Link{"dagpb.Link"}.LookupByIndex(0)
 }
 func (Link) LookupBySegment(seg ipld.PathSegment) (ipld.Node, error) {
@@ -477,7 +477,7 @@ func (Link) MapIterator() ipld.MapIterator {
 func (Link) ListIterator() ipld.ListIterator {
 	return nil
 }
-func (Link) Length() int {
+func (Link) Length() int64 {
 	return -1
 }
 func (Link) IsAbsent() bool {
@@ -489,7 +489,7 @@ func (Link) IsNull() bool {
 func (Link) AsBool() (bool, error) {
 	return mixins.Link{"dagpb.Link"}.AsBool()
 }
-func (Link) AsInt() (int, error) {
+func (Link) AsInt() (int64, error) {
 	return mixins.Link{"dagpb.Link"}.AsInt()
 }
 func (Link) AsFloat() (float64, error) {
@@ -534,10 +534,10 @@ type _Link__Assembler struct {
 }
 
 func (na *_Link__Assembler) reset() {}
-func (_Link__Assembler) BeginMap(sizeHint int) (ipld.MapAssembler, error) {
+func (_Link__Assembler) BeginMap(sizeHint int64) (ipld.MapAssembler, error) {
 	return mixins.LinkAssembler{"dagpb.Link"}.BeginMap(0)
 }
-func (_Link__Assembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (_Link__Assembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	return mixins.LinkAssembler{"dagpb.Link"}.BeginList(0)
 }
 func (na *_Link__Assembler) AssignNull() error {
@@ -555,7 +555,7 @@ func (na *_Link__Assembler) AssignNull() error {
 func (_Link__Assembler) AssignBool(bool) error {
 	return mixins.LinkAssembler{"dagpb.Link"}.AssignBool(false)
 }
-func (_Link__Assembler) AssignInt(int) error {
+func (_Link__Assembler) AssignInt(int64) error {
 	return mixins.LinkAssembler{"dagpb.Link"}.AssignInt(0)
 }
 func (_Link__Assembler) AssignFloat(float64) error {
@@ -579,7 +579,7 @@ func (na *_Link__Assembler) AssignLink(v ipld.Link) error {
 	*na.m = schema.Maybe_Value
 	return nil
 }
-func (na *_Link__Assembler) AssignNode(v ipld.Node) error {
+func (na *_Link__Assembler) ConvertFrom(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -667,8 +667,8 @@ var (
 )
 var _ ipld.Node = (PBLink)(&_PBLink{})
 var _ schema.TypedNode = (PBLink)(&_PBLink{})
-func (PBLink) ReprKind() ipld.ReprKind {
-	return ipld.ReprKind_Map
+func (PBLink) Kind() ipld.Kind {
+	return ipld.Kind_Map
 }
 func (n PBLink) LookupByString(key string) (ipld.Node, error) {
 	switch key {
@@ -695,7 +695,7 @@ func (n PBLink) LookupByNode(key ipld.Node) (ipld.Node, error) {
 	}
 	return n.LookupByString(ks)
 }
-func (PBLink) LookupByIndex(idx int) (ipld.Node, error) {
+func (PBLink) LookupByIndex(idx int64) (ipld.Node, error) {
 	return mixins.Map{"dagpb.PBLink"}.LookupByIndex(0)
 }
 func (n PBLink) LookupBySegment(seg ipld.PathSegment) (ipld.Node, error) {
@@ -745,7 +745,7 @@ func (itr *_PBLink__MapItr) Done() bool {
 func (PBLink) ListIterator() ipld.ListIterator {
 	return nil
 }
-func (PBLink) Length() int {
+func (PBLink) Length() int64 {
 	return 3
 }
 func (PBLink) IsAbsent() bool {
@@ -757,7 +757,7 @@ func (PBLink) IsNull() bool {
 func (PBLink) AsBool() (bool, error) {
 	return mixins.Map{"dagpb.PBLink"}.AsBool()
 }
-func (PBLink) AsInt() (int, error) {
+func (PBLink) AsInt() (int64, error) {
 	return mixins.Map{"dagpb.PBLink"}.AsInt()
 }
 func (PBLink) AsFloat() (float64, error) {
@@ -823,7 +823,7 @@ var (
 	fieldBit__PBLink_Tsize = 1 << 2
 	fieldBits__PBLink_sufficient = 0 + 1 << 0
 )
-func (na *_PBLink__Assembler) BeginMap(int) (ipld.MapAssembler, error) {
+func (na *_PBLink__Assembler) BeginMap(int64) (ipld.MapAssembler, error) {
 	switch *na.m {
 	case schema.Maybe_Value, schema.Maybe_Null:
 		panic("invalid state: cannot assign into assembler that's already finished")
@@ -836,7 +836,7 @@ func (na *_PBLink__Assembler) BeginMap(int) (ipld.MapAssembler, error) {
 	}
 	return na, nil
 }
-func (_PBLink__Assembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (_PBLink__Assembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	return mixins.MapAssembler{"dagpb.PBLink"}.BeginList(0)
 }
 func (na *_PBLink__Assembler) AssignNull() error {
@@ -856,7 +856,7 @@ func (na *_PBLink__Assembler) AssignNull() error {
 func (_PBLink__Assembler) AssignBool(bool) error {
 	return mixins.MapAssembler{"dagpb.PBLink"}.AssignBool(false)
 }
-func (_PBLink__Assembler) AssignInt(int) error {
+func (_PBLink__Assembler) AssignInt(int64) error {
 	return mixins.MapAssembler{"dagpb.PBLink"}.AssignInt(0)
 }
 func (_PBLink__Assembler) AssignFloat(float64) error {
@@ -871,7 +871,7 @@ func (_PBLink__Assembler) AssignBytes([]byte) error {
 func (_PBLink__Assembler) AssignLink(ipld.Link) error {
 	return mixins.MapAssembler{"dagpb.PBLink"}.AssignLink(nil)
 }
-func (na *_PBLink__Assembler) AssignNode(v ipld.Node) error {
+func (na *_PBLink__Assembler) ConvertFrom(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -891,8 +891,8 @@ func (na *_PBLink__Assembler) AssignNode(v ipld.Node) error {
 		*na.m = schema.Maybe_Value
 		return nil
 	}
-	if v.ReprKind() != ipld.ReprKind_Map {
-		return ipld.ErrWrongKind{TypeName: "dagpb.PBLink", MethodName: "AssignNode", AppropriateKind: ipld.ReprKindSet_JustMap, ActualKind: v.ReprKind()}
+	if v.Kind() != ipld.Kind_Map {
+		return ipld.ErrWrongKind{TypeName: "dagpb.PBLink", MethodName: "ConvertFrom", AppropriateKind: ipld.KindSet_JustMap, ActualKind: v.Kind()}
 	}
 	itr := v.MapIterator()
 	for !itr.Done() {
@@ -900,10 +900,10 @@ func (na *_PBLink__Assembler) AssignNode(v ipld.Node) error {
 		if err != nil {
 			return err
 		}
-		if err := na.AssembleKey().AssignNode(k); err != nil {
+		if err := na.AssembleKey().ConvertFrom(k); err != nil {
 			return err
 		}
-		if err := na.AssembleValue().AssignNode(v); err != nil {
+		if err := na.AssembleValue().ConvertFrom(v); err != nil {
 			return err
 		}
 	}
@@ -1078,10 +1078,10 @@ func (ma *_PBLink__Assembler) ValuePrototype(k string) ipld.NodePrototype {
 	panic("todo structbuilder mapassembler valueprototype")
 }
 type _PBLink__KeyAssembler _PBLink__Assembler
-func (_PBLink__KeyAssembler) BeginMap(sizeHint int) (ipld.MapAssembler, error) {
+func (_PBLink__KeyAssembler) BeginMap(sizeHint int64) (ipld.MapAssembler, error) {
 	return mixins.StringAssembler{"dagpb.PBLink.KeyAssembler"}.BeginMap(0)
 }
-func (_PBLink__KeyAssembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (_PBLink__KeyAssembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	return mixins.StringAssembler{"dagpb.PBLink.KeyAssembler"}.BeginList(0)
 }
 func (na *_PBLink__KeyAssembler) AssignNull() error {
@@ -1090,7 +1090,7 @@ func (na *_PBLink__KeyAssembler) AssignNull() error {
 func (_PBLink__KeyAssembler) AssignBool(bool) error {
 	return mixins.StringAssembler{"dagpb.PBLink.KeyAssembler"}.AssignBool(false)
 }
-func (_PBLink__KeyAssembler) AssignInt(int) error {
+func (_PBLink__KeyAssembler) AssignInt(int64) error {
 	return mixins.StringAssembler{"dagpb.PBLink.KeyAssembler"}.AssignInt(0)
 }
 func (_PBLink__KeyAssembler) AssignFloat(float64) error {
@@ -1133,7 +1133,7 @@ func (_PBLink__KeyAssembler) AssignBytes([]byte) error {
 func (_PBLink__KeyAssembler) AssignLink(ipld.Link) error {
 	return mixins.StringAssembler{"dagpb.PBLink.KeyAssembler"}.AssignLink(nil)
 }
-func (ka *_PBLink__KeyAssembler) AssignNode(v ipld.Node) error {
+func (ka *_PBLink__KeyAssembler) ConvertFrom(v ipld.Node) error {
 	if v2, err := v.AsString(); err != nil {
 		return err
 	} else {
@@ -1156,8 +1156,8 @@ var (
 	fieldName__PBLink_Tsize_serial = _String{"Tsize"}
 )
 var _ ipld.Node = &_PBLink__Repr{}
-func (_PBLink__Repr) ReprKind() ipld.ReprKind {
-	return ipld.ReprKind_Map
+func (_PBLink__Repr) Kind() ipld.Kind {
+	return ipld.Kind_Map
 }
 func (n *_PBLink__Repr) LookupByString(key string) (ipld.Node, error) {
 	switch key {
@@ -1184,7 +1184,7 @@ func (n *_PBLink__Repr) LookupByNode(key ipld.Node) (ipld.Node, error) {
 	}
 	return n.LookupByString(ks)
 }
-func (_PBLink__Repr) LookupByIndex(idx int) (ipld.Node, error) {
+func (_PBLink__Repr) LookupByIndex(idx int64) (ipld.Node, error) {
 	return mixins.Map{"dagpb.PBLink.Repr"}.LookupByIndex(0)
 }
 func (n _PBLink__Repr) LookupBySegment(seg ipld.PathSegment) (ipld.Node, error) {
@@ -1246,7 +1246,7 @@ func (itr *_PBLink__ReprMapItr) Done() bool {
 func (_PBLink__Repr) ListIterator() ipld.ListIterator {
 	return nil
 }
-func (rn *_PBLink__Repr) Length() int {
+func (rn *_PBLink__Repr) Length() int64 {
 	l := 3
 	if rn.Name.m == schema.Maybe_Absent {
 		l--
@@ -1254,7 +1254,7 @@ func (rn *_PBLink__Repr) Length() int {
 	if rn.Tsize.m == schema.Maybe_Absent {
 		l--
 	}
-	return l
+	return int64(l)
 }
 func (_PBLink__Repr) IsAbsent() bool {
 	return false
@@ -1265,7 +1265,7 @@ func (_PBLink__Repr) IsNull() bool {
 func (_PBLink__Repr) AsBool() (bool, error) {
 	return mixins.Map{"dagpb.PBLink.Repr"}.AsBool()
 }
-func (_PBLink__Repr) AsInt() (int, error) {
+func (_PBLink__Repr) AsInt() (int64, error) {
 	return mixins.Map{"dagpb.PBLink.Repr"}.AsInt()
 }
 func (_PBLink__Repr) AsFloat() (float64, error) {
@@ -1324,7 +1324,7 @@ func (na *_PBLink__ReprAssembler) reset() {
 	na.ca_Name.reset()
 	na.ca_Tsize.reset()
 }
-func (na *_PBLink__ReprAssembler) BeginMap(int) (ipld.MapAssembler, error) {
+func (na *_PBLink__ReprAssembler) BeginMap(int64) (ipld.MapAssembler, error) {
 	switch *na.m {
 	case schema.Maybe_Value, schema.Maybe_Null:
 		panic("invalid state: cannot assign into assembler that's already finished")
@@ -1337,7 +1337,7 @@ func (na *_PBLink__ReprAssembler) BeginMap(int) (ipld.MapAssembler, error) {
 	}
 	return na, nil
 }
-func (_PBLink__ReprAssembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (_PBLink__ReprAssembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	return mixins.MapAssembler{"dagpb.PBLink.Repr"}.BeginList(0)
 }
 func (na *_PBLink__ReprAssembler) AssignNull() error {
@@ -1357,7 +1357,7 @@ func (na *_PBLink__ReprAssembler) AssignNull() error {
 func (_PBLink__ReprAssembler) AssignBool(bool) error {
 	return mixins.MapAssembler{"dagpb.PBLink.Repr"}.AssignBool(false)
 }
-func (_PBLink__ReprAssembler) AssignInt(int) error {
+func (_PBLink__ReprAssembler) AssignInt(int64) error {
 	return mixins.MapAssembler{"dagpb.PBLink.Repr"}.AssignInt(0)
 }
 func (_PBLink__ReprAssembler) AssignFloat(float64) error {
@@ -1372,7 +1372,7 @@ func (_PBLink__ReprAssembler) AssignBytes([]byte) error {
 func (_PBLink__ReprAssembler) AssignLink(ipld.Link) error {
 	return mixins.MapAssembler{"dagpb.PBLink.Repr"}.AssignLink(nil)
 }
-func (na *_PBLink__ReprAssembler) AssignNode(v ipld.Node) error {
+func (na *_PBLink__ReprAssembler) ConvertFrom(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -1392,8 +1392,8 @@ func (na *_PBLink__ReprAssembler) AssignNode(v ipld.Node) error {
 		*na.m = schema.Maybe_Value
 		return nil
 	}
-	if v.ReprKind() != ipld.ReprKind_Map {
-		return ipld.ErrWrongKind{TypeName: "dagpb.PBLink.Repr", MethodName: "AssignNode", AppropriateKind: ipld.ReprKindSet_JustMap, ActualKind: v.ReprKind()}
+	if v.Kind() != ipld.Kind_Map {
+		return ipld.ErrWrongKind{TypeName: "dagpb.PBLink.Repr", MethodName: "ConvertFrom", AppropriateKind: ipld.KindSet_JustMap, ActualKind: v.Kind()}
 	}
 	itr := v.MapIterator()
 	for !itr.Done() {
@@ -1401,10 +1401,10 @@ func (na *_PBLink__ReprAssembler) AssignNode(v ipld.Node) error {
 		if err != nil {
 			return err
 		}
-		if err := na.AssembleKey().AssignNode(k); err != nil {
+		if err := na.AssembleKey().ConvertFrom(k); err != nil {
 			return err
 		}
-		if err := na.AssembleValue().AssignNode(v); err != nil {
+		if err := na.AssembleValue().ConvertFrom(v); err != nil {
 			return err
 		}
 	}
@@ -1581,10 +1581,10 @@ func (ma *_PBLink__ReprAssembler) ValuePrototype(k string) ipld.NodePrototype {
 	panic("todo structbuilder mapassembler repr valueprototype")
 }
 type _PBLink__ReprKeyAssembler _PBLink__ReprAssembler
-func (_PBLink__ReprKeyAssembler) BeginMap(sizeHint int) (ipld.MapAssembler, error) {
+func (_PBLink__ReprKeyAssembler) BeginMap(sizeHint int64) (ipld.MapAssembler, error) {
 	return mixins.StringAssembler{"dagpb.PBLink.Repr.KeyAssembler"}.BeginMap(0)
 }
-func (_PBLink__ReprKeyAssembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (_PBLink__ReprKeyAssembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	return mixins.StringAssembler{"dagpb.PBLink.Repr.KeyAssembler"}.BeginList(0)
 }
 func (na *_PBLink__ReprKeyAssembler) AssignNull() error {
@@ -1593,7 +1593,7 @@ func (na *_PBLink__ReprKeyAssembler) AssignNull() error {
 func (_PBLink__ReprKeyAssembler) AssignBool(bool) error {
 	return mixins.StringAssembler{"dagpb.PBLink.Repr.KeyAssembler"}.AssignBool(false)
 }
-func (_PBLink__ReprKeyAssembler) AssignInt(int) error {
+func (_PBLink__ReprKeyAssembler) AssignInt(int64) error {
 	return mixins.StringAssembler{"dagpb.PBLink.Repr.KeyAssembler"}.AssignInt(0)
 }
 func (_PBLink__ReprKeyAssembler) AssignFloat(float64) error {
@@ -1636,7 +1636,7 @@ func (_PBLink__ReprKeyAssembler) AssignBytes([]byte) error {
 func (_PBLink__ReprKeyAssembler) AssignLink(ipld.Link) error {
 	return mixins.StringAssembler{"dagpb.PBLink.Repr.KeyAssembler"}.AssignLink(nil)
 }
-func (ka *_PBLink__ReprKeyAssembler) AssignNode(v ipld.Node) error {
+func (ka *_PBLink__ReprKeyAssembler) ConvertFrom(v ipld.Node) error {
 	if v2, err := v.AsString(); err != nil {
 		return err
 	} else {
@@ -1647,14 +1647,14 @@ func (_PBLink__ReprKeyAssembler) Prototype() ipld.NodePrototype {
 	return _String__Prototype{}
 }
 
-func (n *_PBLinks) Lookup(idx int) PBLink {
+func (n *_PBLinks) Lookup(idx int64) PBLink {
 	if n.Length() <= idx {
 		return nil
 	}
 	v := &n.x[idx]
 	return v
 }
-func (n *_PBLinks) LookupMaybe(idx int) MaybePBLink {
+func (n *_PBLinks) LookupMaybe(idx int64) MaybePBLink {
 	if n.Length() <= idx {
 		return nil
 	}
@@ -1675,11 +1675,11 @@ type PBLinks__Itr struct {
 	idx  int
 }
 
-func (itr *PBLinks__Itr) Next() (idx int, v PBLink) {
+func (itr *PBLinks__Itr) Next() (idx int64, v PBLink) {
 	if itr.idx >= len(itr.n.x) {
 		return -1, nil
 	}
-	idx = itr.idx
+	idx = int64(itr.idx)
 	v = &itr.n.x[itr.idx]
 	itr.idx++
 	return
@@ -1723,8 +1723,8 @@ func (m MaybePBLinks) Must() PBLinks {
 }
 var _ ipld.Node = (PBLinks)(&_PBLinks{})
 var _ schema.TypedNode = (PBLinks)(&_PBLinks{})
-func (PBLinks) ReprKind() ipld.ReprKind {
-	return ipld.ReprKind_List
+func (PBLinks) Kind() ipld.Kind {
+	return ipld.Kind_List
 }
 func (PBLinks) LookupByString(string) (ipld.Node, error) {
 	return mixins.List{"dagpb.PBLinks"}.LookupByString("")
@@ -1736,7 +1736,7 @@ func (n PBLinks) LookupByNode(k ipld.Node) (ipld.Node, error) {
 	}
 	return n.LookupByIndex(idx)
 }
-func (n PBLinks) LookupByIndex(idx int) (ipld.Node, error) {
+func (n PBLinks) LookupByIndex(idx int64) (ipld.Node, error) {
 	if n.Length() <= idx {
 		return nil, ipld.ErrNotExists{ipld.PathSegmentOfInt(idx)}
 	}
@@ -1762,11 +1762,11 @@ type _PBLinks__ListItr struct {
 	idx  int
 }
 
-func (itr *_PBLinks__ListItr) Next() (idx int, v ipld.Node, _ error) {
+func (itr *_PBLinks__ListItr) Next() (idx int64, v ipld.Node, _ error) {
 	if itr.idx >= len(itr.n.x) {
 		return -1, nil, ipld.ErrIteratorOverread{}
 	}
-	idx = itr.idx
+	idx = int64(itr.idx)
 	x := &itr.n.x[itr.idx]
 	v = x
 	itr.idx++
@@ -1776,8 +1776,8 @@ func (itr *_PBLinks__ListItr) Done() bool {
 	return itr.idx >= len(itr.n.x)
 }
 
-func (n PBLinks) Length() int {
-	return len(n.x)
+func (n PBLinks) Length() int64 {
+	return int64(len(n.x))
 }
 func (PBLinks) IsAbsent() bool {
 	return false
@@ -1788,7 +1788,7 @@ func (PBLinks) IsNull() bool {
 func (PBLinks) AsBool() (bool, error) {
 	return mixins.List{"dagpb.PBLinks"}.AsBool()
 }
-func (PBLinks) AsInt() (int, error) {
+func (PBLinks) AsInt() (int64, error) {
 	return mixins.List{"dagpb.PBLinks"}.AsInt()
 }
 func (PBLinks) AsFloat() (float64, error) {
@@ -1840,10 +1840,10 @@ func (na *_PBLinks__Assembler) reset() {
 	na.state = laState_initial
 	na.va.reset()
 }
-func (_PBLinks__Assembler) BeginMap(sizeHint int) (ipld.MapAssembler, error) {
+func (_PBLinks__Assembler) BeginMap(sizeHint int64) (ipld.MapAssembler, error) {
 	return mixins.ListAssembler{"dagpb.PBLinks"}.BeginMap(0)
 }
-func (na *_PBLinks__Assembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (na *_PBLinks__Assembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	switch *na.m {
 	case schema.Maybe_Value, schema.Maybe_Null:
 		panic("invalid state: cannot assign into assembler that's already finished")
@@ -1879,7 +1879,7 @@ func (na *_PBLinks__Assembler) AssignNull() error {
 func (_PBLinks__Assembler) AssignBool(bool) error {
 	return mixins.ListAssembler{"dagpb.PBLinks"}.AssignBool(false)
 }
-func (_PBLinks__Assembler) AssignInt(int) error {
+func (_PBLinks__Assembler) AssignInt(int64) error {
 	return mixins.ListAssembler{"dagpb.PBLinks"}.AssignInt(0)
 }
 func (_PBLinks__Assembler) AssignFloat(float64) error {
@@ -1894,7 +1894,7 @@ func (_PBLinks__Assembler) AssignBytes([]byte) error {
 func (_PBLinks__Assembler) AssignLink(ipld.Link) error {
 	return mixins.ListAssembler{"dagpb.PBLinks"}.AssignLink(nil)
 }
-func (na *_PBLinks__Assembler) AssignNode(v ipld.Node) error {
+func (na *_PBLinks__Assembler) ConvertFrom(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -1914,8 +1914,8 @@ func (na *_PBLinks__Assembler) AssignNode(v ipld.Node) error {
 		*na.m = schema.Maybe_Value
 		return nil
 	}
-	if v.ReprKind() != ipld.ReprKind_List {
-		return ipld.ErrWrongKind{TypeName: "dagpb.PBLinks", MethodName: "AssignNode", AppropriateKind: ipld.ReprKindSet_JustList, ActualKind: v.ReprKind()}
+	if v.Kind() != ipld.Kind_List {
+		return ipld.ErrWrongKind{TypeName: "dagpb.PBLinks", MethodName: "ConvertFrom", AppropriateKind: ipld.KindSet_JustList, ActualKind: v.Kind()}
 	}
 	itr := v.ListIterator()
 	for !itr.Done() {
@@ -1923,7 +1923,7 @@ func (na *_PBLinks__Assembler) AssignNode(v ipld.Node) error {
 		if err != nil {
 			return err
 		}
-		if err := na.AssembleValue().AssignNode(v); err != nil {
+		if err := na.AssembleValue().ConvertFrom(v); err != nil {
 			return err
 		}
 	}
@@ -1977,7 +1977,7 @@ func (la *_PBLinks__Assembler) Finish() error {
 	*la.m = schema.Maybe_Value
 	return nil
 }
-func (la *_PBLinks__Assembler) ValuePrototype(_ int) ipld.NodePrototype {
+func (la *_PBLinks__Assembler) ValuePrototype(_ int64) ipld.NodePrototype {
 	return _PBLink__Prototype{}
 }
 func (PBLinks) Type() schema.Type {
@@ -1988,8 +1988,8 @@ func (n PBLinks) Representation() ipld.Node {
 }
 type _PBLinks__Repr _PBLinks
 var _ ipld.Node = &_PBLinks__Repr{}
-func (_PBLinks__Repr) ReprKind() ipld.ReprKind {
-	return ipld.ReprKind_List
+func (_PBLinks__Repr) Kind() ipld.Kind {
+	return ipld.Kind_List
 }
 func (_PBLinks__Repr) LookupByString(string) (ipld.Node, error) {
 	return mixins.List{"dagpb.PBLinks.Repr"}.LookupByString("")
@@ -2001,7 +2001,7 @@ func (nr *_PBLinks__Repr) LookupByNode(k ipld.Node) (ipld.Node, error) {
 	}
 	return v.(PBLink).Representation(), nil
 }
-func (nr *_PBLinks__Repr) LookupByIndex(idx int) (ipld.Node, error) {
+func (nr *_PBLinks__Repr) LookupByIndex(idx int64) (ipld.Node, error) {
 	v, err := (PBLinks)(nr).LookupByIndex(idx)
 	if err != nil || v == ipld.Null {
 		return v, err
@@ -2024,7 +2024,7 @@ func (nr *_PBLinks__Repr) ListIterator() ipld.ListIterator {
 
 type _PBLinks__ReprListItr _PBLinks__ListItr
 
-func (itr *_PBLinks__ReprListItr) Next() (idx int, v ipld.Node, err error) {
+func (itr *_PBLinks__ReprListItr) Next() (idx int64, v ipld.Node, err error) {
 	idx, v, err = (*_PBLinks__ListItr)(itr).Next()
 	if err != nil || v == ipld.Null {
 		return
@@ -2035,8 +2035,8 @@ func (itr *_PBLinks__ReprListItr) Done() bool {
 	return (*_PBLinks__ListItr)(itr).Done()
 }
 
-func (rn *_PBLinks__Repr) Length() int {
-	return len(rn.x)
+func (rn *_PBLinks__Repr) Length() int64 {
+	return int64(len(rn.x))
 }
 func (_PBLinks__Repr) IsAbsent() bool {
 	return false
@@ -2047,7 +2047,7 @@ func (_PBLinks__Repr) IsNull() bool {
 func (_PBLinks__Repr) AsBool() (bool, error) {
 	return mixins.List{"dagpb.PBLinks.Repr"}.AsBool()
 }
-func (_PBLinks__Repr) AsInt() (int, error) {
+func (_PBLinks__Repr) AsInt() (int64, error) {
 	return mixins.List{"dagpb.PBLinks.Repr"}.AsInt()
 }
 func (_PBLinks__Repr) AsFloat() (float64, error) {
@@ -2099,10 +2099,10 @@ func (na *_PBLinks__ReprAssembler) reset() {
 	na.state = laState_initial
 	na.va.reset()
 }
-func (_PBLinks__ReprAssembler) BeginMap(sizeHint int) (ipld.MapAssembler, error) {
+func (_PBLinks__ReprAssembler) BeginMap(sizeHint int64) (ipld.MapAssembler, error) {
 	return mixins.ListAssembler{"dagpb.PBLinks.Repr"}.BeginMap(0)
 }
-func (na *_PBLinks__ReprAssembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (na *_PBLinks__ReprAssembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	switch *na.m {
 	case schema.Maybe_Value, schema.Maybe_Null:
 		panic("invalid state: cannot assign into assembler that's already finished")
@@ -2138,7 +2138,7 @@ func (na *_PBLinks__ReprAssembler) AssignNull() error {
 func (_PBLinks__ReprAssembler) AssignBool(bool) error {
 	return mixins.ListAssembler{"dagpb.PBLinks.Repr"}.AssignBool(false)
 }
-func (_PBLinks__ReprAssembler) AssignInt(int) error {
+func (_PBLinks__ReprAssembler) AssignInt(int64) error {
 	return mixins.ListAssembler{"dagpb.PBLinks.Repr"}.AssignInt(0)
 }
 func (_PBLinks__ReprAssembler) AssignFloat(float64) error {
@@ -2153,7 +2153,7 @@ func (_PBLinks__ReprAssembler) AssignBytes([]byte) error {
 func (_PBLinks__ReprAssembler) AssignLink(ipld.Link) error {
 	return mixins.ListAssembler{"dagpb.PBLinks.Repr"}.AssignLink(nil)
 }
-func (na *_PBLinks__ReprAssembler) AssignNode(v ipld.Node) error {
+func (na *_PBLinks__ReprAssembler) ConvertFrom(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -2173,8 +2173,8 @@ func (na *_PBLinks__ReprAssembler) AssignNode(v ipld.Node) error {
 		*na.m = schema.Maybe_Value
 		return nil
 	}
-	if v.ReprKind() != ipld.ReprKind_List {
-		return ipld.ErrWrongKind{TypeName: "dagpb.PBLinks.Repr", MethodName: "AssignNode", AppropriateKind: ipld.ReprKindSet_JustList, ActualKind: v.ReprKind()}
+	if v.Kind() != ipld.Kind_List {
+		return ipld.ErrWrongKind{TypeName: "dagpb.PBLinks.Repr", MethodName: "ConvertFrom", AppropriateKind: ipld.KindSet_JustList, ActualKind: v.Kind()}
 	}
 	itr := v.ListIterator()
 	for !itr.Done() {
@@ -2182,7 +2182,7 @@ func (na *_PBLinks__ReprAssembler) AssignNode(v ipld.Node) error {
 		if err != nil {
 			return err
 		}
-		if err := na.AssembleValue().AssignNode(v); err != nil {
+		if err := na.AssembleValue().ConvertFrom(v); err != nil {
 			return err
 		}
 	}
@@ -2236,7 +2236,7 @@ func (la *_PBLinks__ReprAssembler) Finish() error {
 	*la.m = schema.Maybe_Value
 	return nil
 }
-func (la *_PBLinks__ReprAssembler) ValuePrototype(_ int) ipld.NodePrototype {
+func (la *_PBLinks__ReprAssembler) ValuePrototype(_ int64) ipld.NodePrototype {
 	return _PBLink__ReprPrototype{}
 }
 
@@ -2286,8 +2286,8 @@ var (
 )
 var _ ipld.Node = (PBNode)(&_PBNode{})
 var _ schema.TypedNode = (PBNode)(&_PBNode{})
-func (PBNode) ReprKind() ipld.ReprKind {
-	return ipld.ReprKind_Map
+func (PBNode) Kind() ipld.Kind {
+	return ipld.Kind_Map
 }
 func (n PBNode) LookupByString(key string) (ipld.Node, error) {
 	switch key {
@@ -2309,7 +2309,7 @@ func (n PBNode) LookupByNode(key ipld.Node) (ipld.Node, error) {
 	}
 	return n.LookupByString(ks)
 }
-func (PBNode) LookupByIndex(idx int) (ipld.Node, error) {
+func (PBNode) LookupByIndex(idx int64) (ipld.Node, error) {
 	return mixins.Map{"dagpb.PBNode"}.LookupByIndex(0)
 }
 func (n PBNode) LookupBySegment(seg ipld.PathSegment) (ipld.Node, error) {
@@ -2352,7 +2352,7 @@ func (itr *_PBNode__MapItr) Done() bool {
 func (PBNode) ListIterator() ipld.ListIterator {
 	return nil
 }
-func (PBNode) Length() int {
+func (PBNode) Length() int64 {
 	return 2
 }
 func (PBNode) IsAbsent() bool {
@@ -2364,7 +2364,7 @@ func (PBNode) IsNull() bool {
 func (PBNode) AsBool() (bool, error) {
 	return mixins.Map{"dagpb.PBNode"}.AsBool()
 }
-func (PBNode) AsInt() (int, error) {
+func (PBNode) AsInt() (int64, error) {
 	return mixins.Map{"dagpb.PBNode"}.AsInt()
 }
 func (PBNode) AsFloat() (float64, error) {
@@ -2427,7 +2427,7 @@ var (
 	fieldBit__PBNode_Data = 1 << 1
 	fieldBits__PBNode_sufficient = 0 + 1 << 0
 )
-func (na *_PBNode__Assembler) BeginMap(int) (ipld.MapAssembler, error) {
+func (na *_PBNode__Assembler) BeginMap(int64) (ipld.MapAssembler, error) {
 	switch *na.m {
 	case schema.Maybe_Value, schema.Maybe_Null:
 		panic("invalid state: cannot assign into assembler that's already finished")
@@ -2440,7 +2440,7 @@ func (na *_PBNode__Assembler) BeginMap(int) (ipld.MapAssembler, error) {
 	}
 	return na, nil
 }
-func (_PBNode__Assembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (_PBNode__Assembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	return mixins.MapAssembler{"dagpb.PBNode"}.BeginList(0)
 }
 func (na *_PBNode__Assembler) AssignNull() error {
@@ -2460,7 +2460,7 @@ func (na *_PBNode__Assembler) AssignNull() error {
 func (_PBNode__Assembler) AssignBool(bool) error {
 	return mixins.MapAssembler{"dagpb.PBNode"}.AssignBool(false)
 }
-func (_PBNode__Assembler) AssignInt(int) error {
+func (_PBNode__Assembler) AssignInt(int64) error {
 	return mixins.MapAssembler{"dagpb.PBNode"}.AssignInt(0)
 }
 func (_PBNode__Assembler) AssignFloat(float64) error {
@@ -2475,7 +2475,7 @@ func (_PBNode__Assembler) AssignBytes([]byte) error {
 func (_PBNode__Assembler) AssignLink(ipld.Link) error {
 	return mixins.MapAssembler{"dagpb.PBNode"}.AssignLink(nil)
 }
-func (na *_PBNode__Assembler) AssignNode(v ipld.Node) error {
+func (na *_PBNode__Assembler) ConvertFrom(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -2495,8 +2495,8 @@ func (na *_PBNode__Assembler) AssignNode(v ipld.Node) error {
 		*na.m = schema.Maybe_Value
 		return nil
 	}
-	if v.ReprKind() != ipld.ReprKind_Map {
-		return ipld.ErrWrongKind{TypeName: "dagpb.PBNode", MethodName: "AssignNode", AppropriateKind: ipld.ReprKindSet_JustMap, ActualKind: v.ReprKind()}
+	if v.Kind() != ipld.Kind_Map {
+		return ipld.ErrWrongKind{TypeName: "dagpb.PBNode", MethodName: "ConvertFrom", AppropriateKind: ipld.KindSet_JustMap, ActualKind: v.Kind()}
 	}
 	itr := v.MapIterator()
 	for !itr.Done() {
@@ -2504,10 +2504,10 @@ func (na *_PBNode__Assembler) AssignNode(v ipld.Node) error {
 		if err != nil {
 			return err
 		}
-		if err := na.AssembleKey().AssignNode(k); err != nil {
+		if err := na.AssembleKey().ConvertFrom(k); err != nil {
 			return err
 		}
-		if err := na.AssembleValue().AssignNode(v); err != nil {
+		if err := na.AssembleValue().ConvertFrom(v); err != nil {
 			return err
 		}
 	}
@@ -2659,10 +2659,10 @@ func (ma *_PBNode__Assembler) ValuePrototype(k string) ipld.NodePrototype {
 	panic("todo structbuilder mapassembler valueprototype")
 }
 type _PBNode__KeyAssembler _PBNode__Assembler
-func (_PBNode__KeyAssembler) BeginMap(sizeHint int) (ipld.MapAssembler, error) {
+func (_PBNode__KeyAssembler) BeginMap(sizeHint int64) (ipld.MapAssembler, error) {
 	return mixins.StringAssembler{"dagpb.PBNode.KeyAssembler"}.BeginMap(0)
 }
-func (_PBNode__KeyAssembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (_PBNode__KeyAssembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	return mixins.StringAssembler{"dagpb.PBNode.KeyAssembler"}.BeginList(0)
 }
 func (na *_PBNode__KeyAssembler) AssignNull() error {
@@ -2671,7 +2671,7 @@ func (na *_PBNode__KeyAssembler) AssignNull() error {
 func (_PBNode__KeyAssembler) AssignBool(bool) error {
 	return mixins.StringAssembler{"dagpb.PBNode.KeyAssembler"}.AssignBool(false)
 }
-func (_PBNode__KeyAssembler) AssignInt(int) error {
+func (_PBNode__KeyAssembler) AssignInt(int64) error {
 	return mixins.StringAssembler{"dagpb.PBNode.KeyAssembler"}.AssignInt(0)
 }
 func (_PBNode__KeyAssembler) AssignFloat(float64) error {
@@ -2707,7 +2707,7 @@ func (_PBNode__KeyAssembler) AssignBytes([]byte) error {
 func (_PBNode__KeyAssembler) AssignLink(ipld.Link) error {
 	return mixins.StringAssembler{"dagpb.PBNode.KeyAssembler"}.AssignLink(nil)
 }
-func (ka *_PBNode__KeyAssembler) AssignNode(v ipld.Node) error {
+func (ka *_PBNode__KeyAssembler) ConvertFrom(v ipld.Node) error {
 	if v2, err := v.AsString(); err != nil {
 		return err
 	} else {
@@ -2729,8 +2729,8 @@ var (
 	fieldName__PBNode_Data_serial = _String{"Data"}
 )
 var _ ipld.Node = &_PBNode__Repr{}
-func (_PBNode__Repr) ReprKind() ipld.ReprKind {
-	return ipld.ReprKind_Map
+func (_PBNode__Repr) Kind() ipld.Kind {
+	return ipld.Kind_Map
 }
 func (n *_PBNode__Repr) LookupByString(key string) (ipld.Node, error) {
 	switch key {
@@ -2752,7 +2752,7 @@ func (n *_PBNode__Repr) LookupByNode(key ipld.Node) (ipld.Node, error) {
 	}
 	return n.LookupByString(ks)
 }
-func (_PBNode__Repr) LookupByIndex(idx int) (ipld.Node, error) {
+func (_PBNode__Repr) LookupByIndex(idx int64) (ipld.Node, error) {
 	return mixins.Map{"dagpb.PBNode.Repr"}.LookupByIndex(0)
 }
 func (n _PBNode__Repr) LookupBySegment(seg ipld.PathSegment) (ipld.Node, error) {
@@ -2802,12 +2802,12 @@ func (itr *_PBNode__ReprMapItr) Done() bool {
 func (_PBNode__Repr) ListIterator() ipld.ListIterator {
 	return nil
 }
-func (rn *_PBNode__Repr) Length() int {
+func (rn *_PBNode__Repr) Length() int64 {
 	l := 2
 	if rn.Data.m == schema.Maybe_Absent {
 		l--
 	}
-	return l
+	return int64(l)
 }
 func (_PBNode__Repr) IsAbsent() bool {
 	return false
@@ -2818,7 +2818,7 @@ func (_PBNode__Repr) IsNull() bool {
 func (_PBNode__Repr) AsBool() (bool, error) {
 	return mixins.Map{"dagpb.PBNode.Repr"}.AsBool()
 }
-func (_PBNode__Repr) AsInt() (int, error) {
+func (_PBNode__Repr) AsInt() (int64, error) {
 	return mixins.Map{"dagpb.PBNode.Repr"}.AsInt()
 }
 func (_PBNode__Repr) AsFloat() (float64, error) {
@@ -2875,7 +2875,7 @@ func (na *_PBNode__ReprAssembler) reset() {
 	na.ca_Links.reset()
 	na.ca_Data.reset()
 }
-func (na *_PBNode__ReprAssembler) BeginMap(int) (ipld.MapAssembler, error) {
+func (na *_PBNode__ReprAssembler) BeginMap(int64) (ipld.MapAssembler, error) {
 	switch *na.m {
 	case schema.Maybe_Value, schema.Maybe_Null:
 		panic("invalid state: cannot assign into assembler that's already finished")
@@ -2888,7 +2888,7 @@ func (na *_PBNode__ReprAssembler) BeginMap(int) (ipld.MapAssembler, error) {
 	}
 	return na, nil
 }
-func (_PBNode__ReprAssembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (_PBNode__ReprAssembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	return mixins.MapAssembler{"dagpb.PBNode.Repr"}.BeginList(0)
 }
 func (na *_PBNode__ReprAssembler) AssignNull() error {
@@ -2908,7 +2908,7 @@ func (na *_PBNode__ReprAssembler) AssignNull() error {
 func (_PBNode__ReprAssembler) AssignBool(bool) error {
 	return mixins.MapAssembler{"dagpb.PBNode.Repr"}.AssignBool(false)
 }
-func (_PBNode__ReprAssembler) AssignInt(int) error {
+func (_PBNode__ReprAssembler) AssignInt(int64) error {
 	return mixins.MapAssembler{"dagpb.PBNode.Repr"}.AssignInt(0)
 }
 func (_PBNode__ReprAssembler) AssignFloat(float64) error {
@@ -2923,7 +2923,7 @@ func (_PBNode__ReprAssembler) AssignBytes([]byte) error {
 func (_PBNode__ReprAssembler) AssignLink(ipld.Link) error {
 	return mixins.MapAssembler{"dagpb.PBNode.Repr"}.AssignLink(nil)
 }
-func (na *_PBNode__ReprAssembler) AssignNode(v ipld.Node) error {
+func (na *_PBNode__ReprAssembler) ConvertFrom(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -2943,8 +2943,8 @@ func (na *_PBNode__ReprAssembler) AssignNode(v ipld.Node) error {
 		*na.m = schema.Maybe_Value
 		return nil
 	}
-	if v.ReprKind() != ipld.ReprKind_Map {
-		return ipld.ErrWrongKind{TypeName: "dagpb.PBNode.Repr", MethodName: "AssignNode", AppropriateKind: ipld.ReprKindSet_JustMap, ActualKind: v.ReprKind()}
+	if v.Kind() != ipld.Kind_Map {
+		return ipld.ErrWrongKind{TypeName: "dagpb.PBNode.Repr", MethodName: "ConvertFrom", AppropriateKind: ipld.KindSet_JustMap, ActualKind: v.Kind()}
 	}
 	itr := v.MapIterator()
 	for !itr.Done() {
@@ -2952,10 +2952,10 @@ func (na *_PBNode__ReprAssembler) AssignNode(v ipld.Node) error {
 		if err != nil {
 			return err
 		}
-		if err := na.AssembleKey().AssignNode(k); err != nil {
+		if err := na.AssembleKey().ConvertFrom(k); err != nil {
 			return err
 		}
-		if err := na.AssembleValue().AssignNode(v); err != nil {
+		if err := na.AssembleValue().ConvertFrom(v); err != nil {
 			return err
 		}
 	}
@@ -3107,10 +3107,10 @@ func (ma *_PBNode__ReprAssembler) ValuePrototype(k string) ipld.NodePrototype {
 	panic("todo structbuilder mapassembler repr valueprototype")
 }
 type _PBNode__ReprKeyAssembler _PBNode__ReprAssembler
-func (_PBNode__ReprKeyAssembler) BeginMap(sizeHint int) (ipld.MapAssembler, error) {
+func (_PBNode__ReprKeyAssembler) BeginMap(sizeHint int64) (ipld.MapAssembler, error) {
 	return mixins.StringAssembler{"dagpb.PBNode.Repr.KeyAssembler"}.BeginMap(0)
 }
-func (_PBNode__ReprKeyAssembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (_PBNode__ReprKeyAssembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	return mixins.StringAssembler{"dagpb.PBNode.Repr.KeyAssembler"}.BeginList(0)
 }
 func (na *_PBNode__ReprKeyAssembler) AssignNull() error {
@@ -3119,7 +3119,7 @@ func (na *_PBNode__ReprKeyAssembler) AssignNull() error {
 func (_PBNode__ReprKeyAssembler) AssignBool(bool) error {
 	return mixins.StringAssembler{"dagpb.PBNode.Repr.KeyAssembler"}.AssignBool(false)
 }
-func (_PBNode__ReprKeyAssembler) AssignInt(int) error {
+func (_PBNode__ReprKeyAssembler) AssignInt(int64) error {
 	return mixins.StringAssembler{"dagpb.PBNode.Repr.KeyAssembler"}.AssignInt(0)
 }
 func (_PBNode__ReprKeyAssembler) AssignFloat(float64) error {
@@ -3155,7 +3155,7 @@ func (_PBNode__ReprKeyAssembler) AssignBytes([]byte) error {
 func (_PBNode__ReprKeyAssembler) AssignLink(ipld.Link) error {
 	return mixins.StringAssembler{"dagpb.PBNode.Repr.KeyAssembler"}.AssignLink(nil)
 }
-func (ka *_PBNode__ReprKeyAssembler) AssignNode(v ipld.Node) error {
+func (ka *_PBNode__ReprKeyAssembler) ConvertFrom(v ipld.Node) error {
 	if v2, err := v.AsString(); err != nil {
 		return err
 	} else {
@@ -3212,8 +3212,8 @@ func (m MaybeString) Must() String {
 }
 var _ ipld.Node = (String)(&_String{})
 var _ schema.TypedNode = (String)(&_String{})
-func (String) ReprKind() ipld.ReprKind {
-	return ipld.ReprKind_String
+func (String) Kind() ipld.Kind {
+	return ipld.Kind_String
 }
 func (String) LookupByString(string) (ipld.Node, error) {
 	return mixins.String{"dagpb.String"}.LookupByString("")
@@ -3221,7 +3221,7 @@ func (String) LookupByString(string) (ipld.Node, error) {
 func (String) LookupByNode(ipld.Node) (ipld.Node, error) {
 	return mixins.String{"dagpb.String"}.LookupByNode(nil)
 }
-func (String) LookupByIndex(idx int) (ipld.Node, error) {
+func (String) LookupByIndex(idx int64) (ipld.Node, error) {
 	return mixins.String{"dagpb.String"}.LookupByIndex(0)
 }
 func (String) LookupBySegment(seg ipld.PathSegment) (ipld.Node, error) {
@@ -3233,7 +3233,7 @@ func (String) MapIterator() ipld.MapIterator {
 func (String) ListIterator() ipld.ListIterator {
 	return nil
 }
-func (String) Length() int {
+func (String) Length() int64 {
 	return -1
 }
 func (String) IsAbsent() bool {
@@ -3245,7 +3245,7 @@ func (String) IsNull() bool {
 func (String) AsBool() (bool, error) {
 	return mixins.String{"dagpb.String"}.AsBool()
 }
-func (String) AsInt() (int, error) {
+func (String) AsInt() (int64, error) {
 	return mixins.String{"dagpb.String"}.AsInt()
 }
 func (String) AsFloat() (float64, error) {
@@ -3290,10 +3290,10 @@ type _String__Assembler struct {
 }
 
 func (na *_String__Assembler) reset() {}
-func (_String__Assembler) BeginMap(sizeHint int) (ipld.MapAssembler, error) {
+func (_String__Assembler) BeginMap(sizeHint int64) (ipld.MapAssembler, error) {
 	return mixins.StringAssembler{"dagpb.String"}.BeginMap(0)
 }
-func (_String__Assembler) BeginList(sizeHint int) (ipld.ListAssembler, error) {
+func (_String__Assembler) BeginList(sizeHint int64) (ipld.ListAssembler, error) {
 	return mixins.StringAssembler{"dagpb.String"}.BeginList(0)
 }
 func (na *_String__Assembler) AssignNull() error {
@@ -3311,7 +3311,7 @@ func (na *_String__Assembler) AssignNull() error {
 func (_String__Assembler) AssignBool(bool) error {
 	return mixins.StringAssembler{"dagpb.String"}.AssignBool(false)
 }
-func (_String__Assembler) AssignInt(int) error {
+func (_String__Assembler) AssignInt(int64) error {
 	return mixins.StringAssembler{"dagpb.String"}.AssignInt(0)
 }
 func (_String__Assembler) AssignFloat(float64) error {
@@ -3335,7 +3335,7 @@ func (_String__Assembler) AssignBytes([]byte) error {
 func (_String__Assembler) AssignLink(ipld.Link) error {
 	return mixins.StringAssembler{"dagpb.String"}.AssignLink(nil)
 }
-func (na *_String__Assembler) AssignNode(v ipld.Node) error {
+func (na *_String__Assembler) ConvertFrom(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}

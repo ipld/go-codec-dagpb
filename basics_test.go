@@ -41,7 +41,7 @@ func validate(t *testing.T, actual ipld.Node, expected pbNode) {
 			t.Fatal(err)
 		}
 		if keyStr == "Links" {
-			if val.ReprKind() != ipld.ReprKind_List {
+			if val.Kind() != ipld.Kind_List {
 				t.Fatal("Links is not a list")
 			}
 			if val.IsAbsent() {
@@ -50,7 +50,7 @@ func validate(t *testing.T, actual ipld.Node, expected pbNode) {
 			if val.IsNull() {
 				t.Fatal("Links is null")
 			}
-			if val.Length() != len(expected.links) {
+			if val.Length() != int64(len(expected.links)) {
 				t.Fatal("non-empty Links list")
 			}
 			hasLinks = true
@@ -59,7 +59,7 @@ func validate(t *testing.T, actual ipld.Node, expected pbNode) {
 				if !val.IsAbsent() {
 					t.Fatalf("Empty Data is not marked as absent")
 				}
-				if val.ReprKind() != ipld.ReprKind_Null {
+				if val.Kind() != ipld.Kind_Null {
 					t.Fatal("Empty Data is not null")
 				}
 				if val.IsNull() {
@@ -205,7 +205,7 @@ func TestNodeWithStableSortedLinks(t *testing.T) {
 
 	node := fluent.MustBuildMap(basicnode.Prototype__Map{}, 2, func(fma fluent.MapAssembler) {
 		fma.AssembleEntry("Data").AssignBytes([]byte("some data"))
-		fma.AssembleEntry("Links").CreateList(len(cids), func(fla fluent.ListAssembler) {
+		fma.AssembleEntry("Links").CreateList(int64(len(cids)), func(fla fluent.ListAssembler) {
 			for _, cid := range cids {
 				fla.AssembleValue().CreateMap(3, func(fma fluent.MapAssembler) {
 					fma.AssembleEntry("Name").AssignString("")
@@ -227,7 +227,7 @@ func TestNodeWithStableSortedLinks(t *testing.T) {
 	}
 	reencNode := nb.Build()
 	links, _ := reencNode.LookupByString("Links")
-	if links.Length() != len(cids) {
+	if links.Length() != int64(len(cids)) {
 		t.Fatal("Incorrect number of links after round-trip")
 	}
 	iter := links.ListIterator()

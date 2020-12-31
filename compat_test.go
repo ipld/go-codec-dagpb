@@ -263,14 +263,14 @@ func buildNode(n pbNode) ipld.Node {
 			fma.AssembleEntry("Data").AssignBytes(n.data)
 		}
 		if n.links != nil {
-			fma.AssembleEntry("Links").CreateList(len(n.links), func(fla fluent.ListAssembler) {
+			fma.AssembleEntry("Links").CreateList(int64(len(n.links)), func(fla fluent.ListAssembler) {
 				for _, link := range n.links {
 					fla.AssembleValue().CreateMap(3, func(fma fluent.MapAssembler) {
 						if link.hasName {
 							fma.AssembleEntry("Name").AssignString(link.name)
 						}
 						if link.hasTsize {
-							fma.AssembleEntry("Tsize").AssignInt(int(link.tsize))
+							fma.AssembleEntry("Tsize").AssignInt(int64(link.tsize))
 						}
 						if link.hash.ByteLen() != 0 {
 							fma.AssembleEntry("Hash").AssignLink(cidlink.Link{Cid: link.hash})
