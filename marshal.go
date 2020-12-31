@@ -27,7 +27,7 @@ type pbLink struct {
 func Marshal(inNode ipld.Node, out io.Writer) error {
 	// Wrap in a typed node for some basic schema form checking
 	builder := Type.PBNode.NewBuilder()
-	if err := builder.AssignNode(inNode); err != nil {
+	if err := builder.ConvertFrom(inNode); err != nil {
 		return err
 	}
 	node := builder.Build()

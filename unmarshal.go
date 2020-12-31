@@ -185,7 +185,7 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 			if err := ma.AssembleKey().AssignString("Tsize"); err != nil {
 				return err
 			}
-			if err := ma.AssembleValue().AssignInt(int(v)); err != nil {
+			if err := ma.AssembleValue().AssignInt(int64(v)); err != nil {
 				return err
 			}
 			haveTsize = true

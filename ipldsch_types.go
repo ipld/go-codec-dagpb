@@ -43,7 +43,7 @@ type _Bytes struct{ x []byte }
 
 // Int matches the IPLD Schema type "Int".  It has int kind.
 type Int = *_Int
-type _Int struct{ x int }
+type _Int struct{ x int64 }
 
 // Link matches the IPLD Schema type "Link".  It has link kind.
 type Link = *_Link
