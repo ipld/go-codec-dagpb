@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/ipfs/go-cid v0.0.7
-	github.com/ipld/go-ipld-prime v0.6.1-0.20201227090628-8fa241ea45dd
+	github.com/ipld/go-ipld-prime v0.7.0
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/multiformats/go-multihash v0.0.14 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
