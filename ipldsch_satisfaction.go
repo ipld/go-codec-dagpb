@@ -173,7 +173,7 @@ func (na *_Bytes__Assembler) AssignBytes(v []byte) error {
 func (_Bytes__Assembler) AssignLink(ipld.Link) error {
 	return mixins.BytesAssembler{"dagpb.Bytes"}.AssignLink(nil)
 }
-func (na *_Bytes__Assembler) ConvertFrom(v ipld.Node) error {
+func (na *_Bytes__Assembler) AssignNode(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -376,7 +376,7 @@ func (_Int__Assembler) AssignBytes([]byte) error {
 func (_Int__Assembler) AssignLink(ipld.Link) error {
 	return mixins.IntAssembler{"dagpb.Int"}.AssignLink(nil)
 }
-func (na *_Int__Assembler) ConvertFrom(v ipld.Node) error {
+func (na *_Int__Assembler) AssignNode(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -579,7 +579,7 @@ func (na *_Link__Assembler) AssignLink(v ipld.Link) error {
 	*na.m = schema.Maybe_Value
 	return nil
 }
-func (na *_Link__Assembler) ConvertFrom(v ipld.Node) error {
+func (na *_Link__Assembler) AssignNode(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -871,7 +871,7 @@ func (_PBLink__Assembler) AssignBytes([]byte) error {
 func (_PBLink__Assembler) AssignLink(ipld.Link) error {
 	return mixins.MapAssembler{"dagpb.PBLink"}.AssignLink(nil)
 }
-func (na *_PBLink__Assembler) ConvertFrom(v ipld.Node) error {
+func (na *_PBLink__Assembler) AssignNode(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -892,7 +892,7 @@ func (na *_PBLink__Assembler) ConvertFrom(v ipld.Node) error {
 		return nil
 	}
 	if v.Kind() != ipld.Kind_Map {
-		return ipld.ErrWrongKind{TypeName: "dagpb.PBLink", MethodName: "ConvertFrom", AppropriateKind: ipld.KindSet_JustMap, ActualKind: v.Kind()}
+		return ipld.ErrWrongKind{TypeName: "dagpb.PBLink", MethodName: "AssignNode", AppropriateKind: ipld.KindSet_JustMap, ActualKind: v.Kind()}
 	}
 	itr := v.MapIterator()
 	for !itr.Done() {
@@ -900,10 +900,10 @@ func (na *_PBLink__Assembler) ConvertFrom(v ipld.Node) error {
 		if err != nil {
 			return err
 		}
-		if err := na.AssembleKey().ConvertFrom(k); err != nil {
+		if err := na.AssembleKey().AssignNode(k); err != nil {
 			return err
 		}
-		if err := na.AssembleValue().ConvertFrom(v); err != nil {
+		if err := na.AssembleValue().AssignNode(v); err != nil {
 			return err
 		}
 	}
@@ -1133,7 +1133,7 @@ func (_PBLink__KeyAssembler) AssignBytes([]byte) error {
 func (_PBLink__KeyAssembler) AssignLink(ipld.Link) error {
 	return mixins.StringAssembler{"dagpb.PBLink.KeyAssembler"}.AssignLink(nil)
 }
-func (ka *_PBLink__KeyAssembler) ConvertFrom(v ipld.Node) error {
+func (ka *_PBLink__KeyAssembler) AssignNode(v ipld.Node) error {
 	if v2, err := v.AsString(); err != nil {
 		return err
 	} else {
@@ -1372,7 +1372,7 @@ func (_PBLink__ReprAssembler) AssignBytes([]byte) error {
 func (_PBLink__ReprAssembler) AssignLink(ipld.Link) error {
 	return mixins.MapAssembler{"dagpb.PBLink.Repr"}.AssignLink(nil)
 }
-func (na *_PBLink__ReprAssembler) ConvertFrom(v ipld.Node) error {
+func (na *_PBLink__ReprAssembler) AssignNode(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -1393,7 +1393,7 @@ func (na *_PBLink__ReprAssembler) ConvertFrom(v ipld.Node) error {
 		return nil
 	}
 	if v.Kind() != ipld.Kind_Map {
-		return ipld.ErrWrongKind{TypeName: "dagpb.PBLink.Repr", MethodName: "ConvertFrom", AppropriateKind: ipld.KindSet_JustMap, ActualKind: v.Kind()}
+		return ipld.ErrWrongKind{TypeName: "dagpb.PBLink.Repr", MethodName: "AssignNode", AppropriateKind: ipld.KindSet_JustMap, ActualKind: v.Kind()}
 	}
 	itr := v.MapIterator()
 	for !itr.Done() {
@@ -1401,10 +1401,10 @@ func (na *_PBLink__ReprAssembler) ConvertFrom(v ipld.Node) error {
 		if err != nil {
 			return err
 		}
-		if err := na.AssembleKey().ConvertFrom(k); err != nil {
+		if err := na.AssembleKey().AssignNode(k); err != nil {
 			return err
 		}
-		if err := na.AssembleValue().ConvertFrom(v); err != nil {
+		if err := na.AssembleValue().AssignNode(v); err != nil {
 			return err
 		}
 	}
@@ -1636,7 +1636,7 @@ func (_PBLink__ReprKeyAssembler) AssignBytes([]byte) error {
 func (_PBLink__ReprKeyAssembler) AssignLink(ipld.Link) error {
 	return mixins.StringAssembler{"dagpb.PBLink.Repr.KeyAssembler"}.AssignLink(nil)
 }
-func (ka *_PBLink__ReprKeyAssembler) ConvertFrom(v ipld.Node) error {
+func (ka *_PBLink__ReprKeyAssembler) AssignNode(v ipld.Node) error {
 	if v2, err := v.AsString(); err != nil {
 		return err
 	} else {
@@ -1894,7 +1894,7 @@ func (_PBLinks__Assembler) AssignBytes([]byte) error {
 func (_PBLinks__Assembler) AssignLink(ipld.Link) error {
 	return mixins.ListAssembler{"dagpb.PBLinks"}.AssignLink(nil)
 }
-func (na *_PBLinks__Assembler) ConvertFrom(v ipld.Node) error {
+func (na *_PBLinks__Assembler) AssignNode(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -1915,7 +1915,7 @@ func (na *_PBLinks__Assembler) ConvertFrom(v ipld.Node) error {
 		return nil
 	}
 	if v.Kind() != ipld.Kind_List {
-		return ipld.ErrWrongKind{TypeName: "dagpb.PBLinks", MethodName: "ConvertFrom", AppropriateKind: ipld.KindSet_JustList, ActualKind: v.Kind()}
+		return ipld.ErrWrongKind{TypeName: "dagpb.PBLinks", MethodName: "AssignNode", AppropriateKind: ipld.KindSet_JustList, ActualKind: v.Kind()}
 	}
 	itr := v.ListIterator()
 	for !itr.Done() {
@@ -1923,7 +1923,7 @@ func (na *_PBLinks__Assembler) ConvertFrom(v ipld.Node) error {
 		if err != nil {
 			return err
 		}
-		if err := na.AssembleValue().ConvertFrom(v); err != nil {
+		if err := na.AssembleValue().AssignNode(v); err != nil {
 			return err
 		}
 	}
@@ -2153,7 +2153,7 @@ func (_PBLinks__ReprAssembler) AssignBytes([]byte) error {
 func (_PBLinks__ReprAssembler) AssignLink(ipld.Link) error {
 	return mixins.ListAssembler{"dagpb.PBLinks.Repr"}.AssignLink(nil)
 }
-func (na *_PBLinks__ReprAssembler) ConvertFrom(v ipld.Node) error {
+func (na *_PBLinks__ReprAssembler) AssignNode(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -2174,7 +2174,7 @@ func (na *_PBLinks__ReprAssembler) ConvertFrom(v ipld.Node) error {
 		return nil
 	}
 	if v.Kind() != ipld.Kind_List {
-		return ipld.ErrWrongKind{TypeName: "dagpb.PBLinks.Repr", MethodName: "ConvertFrom", AppropriateKind: ipld.KindSet_JustList, ActualKind: v.Kind()}
+		return ipld.ErrWrongKind{TypeName: "dagpb.PBLinks.Repr", MethodName: "AssignNode", AppropriateKind: ipld.KindSet_JustList, ActualKind: v.Kind()}
 	}
 	itr := v.ListIterator()
 	for !itr.Done() {
@@ -2182,7 +2182,7 @@ func (na *_PBLinks__ReprAssembler) ConvertFrom(v ipld.Node) error {
 		if err != nil {
 			return err
 		}
-		if err := na.AssembleValue().ConvertFrom(v); err != nil {
+		if err := na.AssembleValue().AssignNode(v); err != nil {
 			return err
 		}
 	}
@@ -2475,7 +2475,7 @@ func (_PBNode__Assembler) AssignBytes([]byte) error {
 func (_PBNode__Assembler) AssignLink(ipld.Link) error {
 	return mixins.MapAssembler{"dagpb.PBNode"}.AssignLink(nil)
 }
-func (na *_PBNode__Assembler) ConvertFrom(v ipld.Node) error {
+func (na *_PBNode__Assembler) AssignNode(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -2496,7 +2496,7 @@ func (na *_PBNode__Assembler) ConvertFrom(v ipld.Node) error {
 		return nil
 	}
 	if v.Kind() != ipld.Kind_Map {
-		return ipld.ErrWrongKind{TypeName: "dagpb.PBNode", MethodName: "ConvertFrom", AppropriateKind: ipld.KindSet_JustMap, ActualKind: v.Kind()}
+		return ipld.ErrWrongKind{TypeName: "dagpb.PBNode", MethodName: "AssignNode", AppropriateKind: ipld.KindSet_JustMap, ActualKind: v.Kind()}
 	}
 	itr := v.MapIterator()
 	for !itr.Done() {
@@ -2504,10 +2504,10 @@ func (na *_PBNode__Assembler) ConvertFrom(v ipld.Node) error {
 		if err != nil {
 			return err
 		}
-		if err := na.AssembleKey().ConvertFrom(k); err != nil {
+		if err := na.AssembleKey().AssignNode(k); err != nil {
 			return err
 		}
-		if err := na.AssembleValue().ConvertFrom(v); err != nil {
+		if err := na.AssembleValue().AssignNode(v); err != nil {
 			return err
 		}
 	}
@@ -2707,7 +2707,7 @@ func (_PBNode__KeyAssembler) AssignBytes([]byte) error {
 func (_PBNode__KeyAssembler) AssignLink(ipld.Link) error {
 	return mixins.StringAssembler{"dagpb.PBNode.KeyAssembler"}.AssignLink(nil)
 }
-func (ka *_PBNode__KeyAssembler) ConvertFrom(v ipld.Node) error {
+func (ka *_PBNode__KeyAssembler) AssignNode(v ipld.Node) error {
 	if v2, err := v.AsString(); err != nil {
 		return err
 	} else {
@@ -2923,7 +2923,7 @@ func (_PBNode__ReprAssembler) AssignBytes([]byte) error {
 func (_PBNode__ReprAssembler) AssignLink(ipld.Link) error {
 	return mixins.MapAssembler{"dagpb.PBNode.Repr"}.AssignLink(nil)
 }
-func (na *_PBNode__ReprAssembler) ConvertFrom(v ipld.Node) error {
+func (na *_PBNode__ReprAssembler) AssignNode(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
@@ -2944,7 +2944,7 @@ func (na *_PBNode__ReprAssembler) ConvertFrom(v ipld.Node) error {
 		return nil
 	}
 	if v.Kind() != ipld.Kind_Map {
-		return ipld.ErrWrongKind{TypeName: "dagpb.PBNode.Repr", MethodName: "ConvertFrom", AppropriateKind: ipld.KindSet_JustMap, ActualKind: v.Kind()}
+		return ipld.ErrWrongKind{TypeName: "dagpb.PBNode.Repr", MethodName: "AssignNode", AppropriateKind: ipld.KindSet_JustMap, ActualKind: v.Kind()}
 	}
 	itr := v.MapIterator()
 	for !itr.Done() {
@@ -2952,10 +2952,10 @@ func (na *_PBNode__ReprAssembler) ConvertFrom(v ipld.Node) error {
 		if err != nil {
 			return err
 		}
-		if err := na.AssembleKey().ConvertFrom(k); err != nil {
+		if err := na.AssembleKey().AssignNode(k); err != nil {
 			return err
 		}
-		if err := na.AssembleValue().ConvertFrom(v); err != nil {
+		if err := na.AssembleValue().AssignNode(v); err != nil {
 			return err
 		}
 	}
@@ -3155,7 +3155,7 @@ func (_PBNode__ReprKeyAssembler) AssignBytes([]byte) error {
 func (_PBNode__ReprKeyAssembler) AssignLink(ipld.Link) error {
 	return mixins.StringAssembler{"dagpb.PBNode.Repr.KeyAssembler"}.AssignLink(nil)
 }
-func (ka *_PBNode__ReprKeyAssembler) ConvertFrom(v ipld.Node) error {
+func (ka *_PBNode__ReprKeyAssembler) AssignNode(v ipld.Node) error {
 	if v2, err := v.AsString(); err != nil {
 		return err
 	} else {
@@ -3335,7 +3335,7 @@ func (_String__Assembler) AssignBytes([]byte) error {
 func (_String__Assembler) AssignLink(ipld.Link) error {
 	return mixins.StringAssembler{"dagpb.String"}.AssignLink(nil)
 }
-func (na *_String__Assembler) ConvertFrom(v ipld.Node) error {
+func (na *_String__Assembler) AssignNode(v ipld.Node) error {
 	if v.IsNull() {
 		return na.AssignNull()
 	}
