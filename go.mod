@@ -1,4 +1,4 @@
-module github.com/ipld/go-codec-dagpb/dagpb
+module github.com/ipld/go-codec-dagpb
 
 go 1.15
 
