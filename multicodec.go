@@ -4,17 +4,17 @@ import (
 	"io"
 
 	ipld "github.com/ipld/go-ipld-prime"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/ipld/go-ipld-prime/multicodec"
 )
 
 var (
-	_ cidlink.MulticodecDecoder = Decoder
-	_ cidlink.MulticodecEncoder = Encoder
+	_ ipld.Decoder = Decoder
+	_ ipld.Encoder = Encoder
 )
 
 func init() {
-	cidlink.RegisterMulticodecDecoder(0x70, Decoder)
-	cidlink.RegisterMulticodecEncoder(0x70, Encoder)
+	multicodec.DecoderRegistry[0x70] = Decoder
+	multicodec.EncoderRegistry[0x70] = Encoder
 }
 
 // Decoder provides an IPLD codec decode interface for DAG-PB data. Provide a
