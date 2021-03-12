@@ -4,7 +4,9 @@ import (
 	"io"
 
 	ipld "github.com/ipld/go-ipld-prime"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/multicodec"
+	"github.com/ipld/go-ipld-prime/traversal"
 )
 
 var (
@@ -36,4 +38,15 @@ func Decode(na ipld.NodeAssembler, r io.Reader) error {
 // code 0x70 when this package is invoked via init.
 func Encode(n ipld.Node, w io.Writer) error {
 	return Marshal(n, w)
+}
+
+// AddSupportToChooser takes an existing node prototype chooser and subs in
+// PBNode for the dag-pb multicodec code.
+func AddSupportToChooser(existing traversal.LinkTargetNodePrototypeChooser) traversal.LinkTargetNodePrototypeChooser {
+	return func(lnk ipld.Link, lnkCtx ipld.LinkContext) (ipld.NodePrototype, error) {
+		if lnk, ok := lnk.(cidlink.Link); ok && lnk.Cid.Prefix().Codec == 0x70 {
+			return Type.PBNode, nil
+		}
+		return existing(lnk, lnkCtx)
+	}
 }
