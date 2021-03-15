@@ -96,7 +96,7 @@ func runTest(t *testing.T, bytsHex string, expected pbNode) {
 
 	roundTrip := func(t *testing.T, node ipld.Node) {
 		var buf bytes.Buffer
-		if err := Encoder(node, &buf); err != nil {
+		if err := Encode(node, &buf); err != nil {
 			t.Fatal(err)
 		}
 
@@ -108,7 +108,7 @@ func runTest(t *testing.T, bytsHex string, expected pbNode) {
 
 	t.Run("basicnode", func(t *testing.T) {
 		nb := basicnode.Prototype__Map{}.NewBuilder()
-		err := Decoder(nb, bytes.NewReader(byts))
+		err := Decode(nb, bytes.NewReader(byts))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -120,7 +120,7 @@ func runTest(t *testing.T, bytsHex string, expected pbNode) {
 
 	t.Run("typed", func(t *testing.T) {
 		nb := Type.PBNode.NewBuilder()
-		err := Decoder(nb, bytes.NewReader(byts))
+		err := Decode(nb, bytes.NewReader(byts))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -180,7 +180,7 @@ func TestNodeWithTwoUnsortedLinks(t *testing.T) {
 	})
 
 	var buf bytes.Buffer
-	if err := Encoder(node, &buf); err != nil {
+	if err := Encode(node, &buf); err != nil {
 		t.Fatal(err)
 	}
 	if hex.EncodeToString(buf.Bytes()) != encoded {
@@ -217,11 +217,11 @@ func TestNodeWithStableSortedLinks(t *testing.T) {
 	})
 
 	var buf bytes.Buffer
-	if err := Encoder(node, &buf); err != nil {
+	if err := Encode(node, &buf); err != nil {
 		t.Fatal(err)
 	}
 	nb := basicnode.Prototype__Map{}.NewBuilder()
-	err := Decoder(nb, bytes.NewReader(buf.Bytes()))
+	err := Decode(nb, bytes.NewReader(buf.Bytes()))
 	if err != nil {
 		t.Fatal(err)
 	}

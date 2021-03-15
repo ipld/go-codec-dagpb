@@ -2,7 +2,7 @@
 
 **An implementation of the IPLD [DAG-PB](https://github.com/ipld/specs/blob/master/block-layer/codecs/dag-pb.md) spec for [go-ipld-prime](https://github.com/ipld/go-ipld-prime/)**
 
-Use `Decoder(ipld.NodeAssembler, io.Reader)` and `Encoder(ipld.Node, io.Writer)` directly, or import this package to have this codec registered into the go-ipld-prime CID link loader.
+Use `Decode(ipld.NodeAssembler, io.Reader)` and `Encode(ipld.Node, io.Writer)` directly, or import this package to have this codec registered into the go-ipld-prime CID link loader.
 
 Nodes encoded with this codec _must_ conform to the DAG-PB spec. Specifically, they should have the non-optional fields shown in the DAG-PB schema:
 
