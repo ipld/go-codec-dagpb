@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	_ ipld.Decode = Decode
-	_ ipld.Encode = Encode
+	_ ipld.Decoder = Decode
+	_ ipld.Encoder = Encode
 )
 
 func init() {
