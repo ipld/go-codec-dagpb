@@ -13,8 +13,8 @@ var (
 )
 
 func init() {
-	multicodec.DecoderRegistry[0x70] = Decoder
-	multicodec.EncoderRegistry[0x70] = Encoder
+	multicodec.RegisterDecoder(0x70, Decoder)
+	multicodec.RegisterEncoder(0x70, Encoder)
 }
 
 // Decoder provides an IPLD codec decode interface for DAG-PB data. Provide a
