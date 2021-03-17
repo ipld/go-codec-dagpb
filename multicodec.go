@@ -50,3 +50,18 @@ func AddSupportToChooser(existing traversal.LinkTargetNodePrototypeChooser) trav
 		return existing(lnk, lnkCtx)
 	}
 }
+
+// We switched to simpler API names after v1.0.0, so keep the old names around
+// as deprecated forwarding funcs until a future v2+.
+// TODO: consider deprecating Marshal/Unmarshal too, since it's a bit
+// unnecessary to have two supported names for each API.
+
+// Deprecated: use Decode instead.
+func Decoder(na ipld.NodeAssembler, r io.Reader) error {
+	return Unmarshal(na, r)
+}
+
+// Deprecated: use Encode instead.
+func Encoder(n ipld.Node, w io.Writer) error {
+	return Marshal(n, w)
+}
