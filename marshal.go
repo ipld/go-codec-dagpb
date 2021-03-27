@@ -1,6 +1,7 @@
 package dagpb
 
 import (
+	"fmt"
 	"io"
 	math_bits "math/bits"
 	"sort"
@@ -8,7 +9,6 @@ import (
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"golang.org/x/xerrors"
 )
 
 type pbLink struct {
@@ -63,7 +63,7 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 				if !ok {
 					// this _should_ be taken care of by the Typed conversion above with
 					// "missing required fields: Hash"
-					return xerrors.Errorf("invalid DAG-PB form (link must have a Hash)")
+					return fmt.Errorf("invalid DAG-PB form (link must have a Hash)")
 				}
 				pbLinks[ii].hash = cl.Cid
 			}
@@ -94,7 +94,7 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 						return err
 					}
 					if tsize < 0 {
-						return xerrors.Errorf("Link has negative Tsize value [%v]", tsize)
+						return fmt.Errorf("Link has negative Tsize value [%v]", tsize)
 					}
 					utsize := uint64(tsize)
 					pbLinks[ii].tsize = utsize
@@ -116,7 +116,7 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 				return err
 			}
 			if wrote != size {
-				return xerrors.Errorf("bad PBLink marshal, wrote wrong number of bytes")
+				return fmt.Errorf("bad PBLink marshal, wrote wrong number of bytes")
 			}
 			out.Write(chunk)
 		}
