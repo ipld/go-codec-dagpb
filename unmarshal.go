@@ -1,18 +1,18 @@
 package dagpb
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/polydawn/refmt/shared"
-	"golang.org/x/xerrors"
 )
 
 // ErrIntOverflow is returned a varint overflows during decode, it indicates
 // malformed data
-var ErrIntOverflow = xerrors.Errorf("protobuf: varint overflow")
+var ErrIntOverflow = fmt.Errorf("protobuf: varint overflow")
 
 // Unmarshal provides an IPLD codec decode interface for DAG-PB data. Provide
 // a compatible NodeAssembler and a byte source to unmarshal a DAG-PB IPLD
@@ -46,12 +46,12 @@ func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
 			return err
 		}
 		if wireType != 2 {
-			return xerrors.Errorf("protobuf: (PBNode) invalid wireType, expected 2, got %d", wireType)
+			return fmt.Errorf("protobuf: (PBNode) invalid wireType, expected 2, got %d", wireType)
 		}
 
 		if fieldNum == 1 {
 			if haveData {
-				return xerrors.Errorf("protobuf: (PBNode) duplicate Data section")
+				return fmt.Errorf("protobuf: (PBNode) duplicate Data section")
 			}
 			var chunk []byte
 			if chunk, err = decodeBytes(reader); err != nil {
@@ -72,7 +72,7 @@ func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
 			haveData = true
 		} else if fieldNum == 2 {
 			if haveData {
-				return xerrors.Errorf("protobuf: (PBNode) invalid order, found Data before Links content")
+				return fmt.Errorf("protobuf: (PBNode) invalid order, found Data before Links content")
 			}
 
 			bytesLen, err := decodeVarint(reader)
@@ -90,7 +90,7 @@ func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
 				return err
 			}
 		} else {
-			return xerrors.Errorf("protobuf: (PBNode) invalid fieldNumber, expected 1 or 2, got %d", fieldNum)
+			return fmt.Errorf("protobuf: (PBNode) invalid fieldNumber, expected 1 or 2, got %d", fieldNum)
 		}
 	}
 
@@ -112,7 +112,7 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 		if readBytes == length {
 			break
 		} else if readBytes > length {
-			return xerrors.Errorf("protobuf: (PBLink) bad length for link")
+			return fmt.Errorf("protobuf: (PBLink) bad length for link")
 		}
 		fieldNum, wireType, err := decodeKey(reader)
 		if err != nil {
@@ -121,16 +121,16 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 
 		if fieldNum == 1 {
 			if haveHash {
-				return xerrors.Errorf("protobuf: (PBLink) duplicate Hash section")
+				return fmt.Errorf("protobuf: (PBLink) duplicate Hash section")
 			}
 			if haveName {
-				return xerrors.Errorf("protobuf: (PBLink) invalid order, found Name before Hash")
+				return fmt.Errorf("protobuf: (PBLink) invalid order, found Name before Hash")
 			}
 			if haveTsize {
-				return xerrors.Errorf("protobuf: (PBLink) invalid order, found Tsize before Hash")
+				return fmt.Errorf("protobuf: (PBLink) invalid order, found Tsize before Hash")
 			}
 			if wireType != 2 {
-				return xerrors.Errorf("protobuf: (PBLink) wrong wireType (%d) for Hash", wireType)
+				return fmt.Errorf("protobuf: (PBLink) wrong wireType (%d) for Hash", wireType)
 			}
 
 			var chunk []byte
@@ -139,7 +139,7 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 			}
 			var c cid.Cid
 			if _, c, err = cid.CidFromBytes(chunk); err != nil {
-				return xerrors.Errorf("invalid Hash field found in link, expected CID (%v)", err)
+				return fmt.Errorf("invalid Hash field found in link, expected CID (%v)", err)
 			}
 			if err := ma.AssembleKey().AssignString("Hash"); err != nil {
 				return err
@@ -150,13 +150,13 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 			haveHash = true
 		} else if fieldNum == 2 {
 			if haveName {
-				return xerrors.Errorf("protobuf: (PBLink) duplicate Name section")
+				return fmt.Errorf("protobuf: (PBLink) duplicate Name section")
 			}
 			if haveTsize {
-				return xerrors.Errorf("protobuf: (PBLink) invalid order, found Tsize before Name")
+				return fmt.Errorf("protobuf: (PBLink) invalid order, found Tsize before Name")
 			}
 			if wireType != 2 {
-				return xerrors.Errorf("protobuf: (PBLink) wrong wireType (%d) for Name", wireType)
+				return fmt.Errorf("protobuf: (PBLink) wrong wireType (%d) for Name", wireType)
 			}
 
 			var chunk []byte
@@ -172,10 +172,10 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 			haveName = true
 		} else if fieldNum == 3 {
 			if haveTsize {
-				return xerrors.Errorf("protobuf: (PBLink) duplicate Tsize section")
+				return fmt.Errorf("protobuf: (PBLink) duplicate Tsize section")
 			}
 			if wireType != 0 {
-				return xerrors.Errorf("protobuf: (PBLink) wrong wireType (%d) for Tsize", wireType)
+				return fmt.Errorf("protobuf: (PBLink) wrong wireType (%d) for Tsize", wireType)
 			}
 
 			var v uint64
@@ -190,12 +190,12 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 			}
 			haveTsize = true
 		} else {
-			return xerrors.Errorf("protobuf: (PBLink) invalid fieldNumber, expected 1, 2 or 3, got %d", fieldNum)
+			return fmt.Errorf("protobuf: (PBLink) invalid fieldNumber, expected 1, 2 or 3, got %d", fieldNum)
 		}
 	}
 
 	if !haveHash {
-		return xerrors.Errorf("invalid Hash field found in link, expected CID")
+		return fmt.Errorf("invalid Hash field found in link, expected CID")
 	}
 
 	return nil
@@ -222,7 +222,7 @@ func decodeBytes(reader shared.SlickReader) ([]byte, error) {
 	}
 	byts, err := reader.Readn(int(bytesLen))
 	if err != nil {
-		return nil, xerrors.Errorf("protobuf: unexpected read error: %w", err)
+		return nil, fmt.Errorf("protobuf: unexpected read error: %w", err)
 	}
 	return byts, nil
 }
@@ -236,7 +236,7 @@ func decodeVarint(reader shared.SlickReader) (uint64, error) {
 		}
 		b, err := reader.Readn1()
 		if err != nil {
-			return 0, xerrors.Errorf("protobuf: unexpected read error: %w", err)
+			return 0, fmt.Errorf("protobuf: unexpected read error: %w", err)
 		}
 		v |= uint64(b&0x7F) << shift
 		if b < 0x80 {
