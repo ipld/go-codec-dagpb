@@ -3,11 +3,12 @@ package dagpb
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/polydawn/refmt/shared"
+	"google.golang.org/protobuf/encoding/protowire"
 )
 
 // ErrIntOverflow is returned a varint overflows during decode, it indicates
@@ -19,12 +20,23 @@ var ErrIntOverflow = fmt.Errorf("protobuf: varint overflow")
 // Node. Use the NodeAssembler from the PBNode type for safest construction
 // (Type.PBNode.NewBuilder()). A Map assembler will also work.
 func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
+	var remaining []byte
+	if buf, ok := in.(interface{ Bytes() []byte }); ok {
+		remaining = buf.Bytes()
+	} else {
+		var err error
+		remaining, err = ioutil.ReadAll(in)
+		if err != nil {
+			return err
+		}
+	}
+
 	ma, err := na.BeginMap(2)
 	if err != nil {
 		return err
 	}
 	// always make "Links", even if we don't use it
-	if err = ma.AssembleKey().AssignString("Links"); err != nil {
+	if err := ma.AssembleKey().AssignString("Links"); err != nil {
 		return err
 	}
 	links, err := ma.AssembleValue().BeginList(0)
@@ -33,30 +45,33 @@ func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
 	}
 
 	haveData := false
-	reader := shared.NewReader(in)
 	for {
-		_, err := reader.Readn1()
-		if err == io.EOF {
+		if len(remaining) == 0 {
 			break
 		}
-		reader.Unreadn1()
 
-		fieldNum, wireType, err := decodeKey(reader)
-		if err != nil {
-			return err
+		fieldNum, wireType, n := protowire.ConsumeTag(remaining)
+		if n < 0 {
+			return protowire.ParseError(n)
 		}
+		remaining = remaining[n:]
+
 		if wireType != 2 {
 			return fmt.Errorf("protobuf: (PBNode) invalid wireType, expected 2, got %d", wireType)
 		}
 
-		if fieldNum == 1 {
+		switch fieldNum {
+		case 1:
 			if haveData {
 				return fmt.Errorf("protobuf: (PBNode) duplicate Data section")
 			}
-			var chunk []byte
-			if chunk, err = decodeBytes(reader); err != nil {
-				return err
+
+			chunk, n := protowire.ConsumeBytes(remaining)
+			if n < 0 {
+				return protowire.ParseError(n)
 			}
+			remaining = remaining[n:]
+
 			// Data must come after Links, so it's safe to close this here even if we
 			// didn't use it
 			if err := links.Finish(); err != nil {
@@ -70,26 +85,31 @@ func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
 				return err
 			}
 			haveData = true
-		} else if fieldNum == 2 {
+
+		case 2:
 			if haveData {
 				return fmt.Errorf("protobuf: (PBNode) invalid order, found Data before Links content")
 			}
 
-			bytesLen, err := decodeVarint(reader)
-			if err != nil {
-				return err
+			bytesLen, n := protowire.ConsumeVarint(remaining)
+			if n < 0 {
+				return protowire.ParseError(n)
 			}
+			remaining = remaining[n:]
+
 			curLink, err := links.AssembleValue().BeginMap(3)
 			if err != nil {
 				return err
 			}
-			if err = unmarshalLink(reader, int(bytesLen), curLink); err != nil {
+			if err := unmarshalLink(remaining[:bytesLen], curLink); err != nil {
 				return err
 			}
+			remaining = remaining[bytesLen:]
 			if err := curLink.Finish(); err != nil {
 				return err
 			}
-		} else {
+
+		default:
 			return fmt.Errorf("protobuf: (PBNode) invalid fieldNumber, expected 1 or 2, got %d", fieldNum)
 		}
 	}
@@ -102,24 +122,23 @@ func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
 	return ma.Finish()
 }
 
-func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) error {
+func unmarshalLink(remaining []byte, ma ipld.MapAssembler) error {
 	haveHash := false
 	haveName := false
 	haveTsize := false
-	startOffset := reader.NumRead()
 	for {
-		readBytes := reader.NumRead() - startOffset
-		if readBytes == length {
+		if len(remaining) == 0 {
 			break
-		} else if readBytes > length {
-			return fmt.Errorf("protobuf: (PBLink) bad length for link")
-		}
-		fieldNum, wireType, err := decodeKey(reader)
-		if err != nil {
-			return err
 		}
 
-		if fieldNum == 1 {
+		fieldNum, wireType, n := protowire.ConsumeTag(remaining)
+		if n < 0 {
+			return protowire.ParseError(n)
+		}
+		remaining = remaining[n:]
+
+		switch fieldNum {
+		case 1:
 			if haveHash {
 				return fmt.Errorf("protobuf: (PBLink) duplicate Hash section")
 			}
@@ -133,12 +152,14 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 				return fmt.Errorf("protobuf: (PBLink) wrong wireType (%d) for Hash", wireType)
 			}
 
-			var chunk []byte
-			if chunk, err = decodeBytes(reader); err != nil {
-				return err
+			chunk, n := protowire.ConsumeBytes(remaining)
+			if n < 0 {
+				return protowire.ParseError(n)
 			}
-			var c cid.Cid
-			if _, c, err = cid.CidFromBytes(chunk); err != nil {
+			remaining = remaining[n:]
+
+			_, c, err := cid.CidFromBytes(chunk)
+			if err != nil {
 				return fmt.Errorf("invalid Hash field found in link, expected CID (%v)", err)
 			}
 			if err := ma.AssembleKey().AssignString("Hash"); err != nil {
@@ -148,7 +169,8 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 				return err
 			}
 			haveHash = true
-		} else if fieldNum == 2 {
+
+		case 2:
 			if haveName {
 				return fmt.Errorf("protobuf: (PBLink) duplicate Name section")
 			}
@@ -159,10 +181,12 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 				return fmt.Errorf("protobuf: (PBLink) wrong wireType (%d) for Name", wireType)
 			}
 
-			var chunk []byte
-			if chunk, err = decodeBytes(reader); err != nil {
-				return err
+			chunk, n := protowire.ConsumeBytes(remaining)
+			if n < 0 {
+				return protowire.ParseError(n)
 			}
+			remaining = remaining[n:]
+
 			if err := ma.AssembleKey().AssignString("Name"); err != nil {
 				return err
 			}
@@ -170,7 +194,8 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 				return err
 			}
 			haveName = true
-		} else if fieldNum == 3 {
+
+		case 3:
 			if haveTsize {
 				return fmt.Errorf("protobuf: (PBLink) duplicate Tsize section")
 			}
@@ -178,10 +203,12 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 				return fmt.Errorf("protobuf: (PBLink) wrong wireType (%d) for Tsize", wireType)
 			}
 
-			var v uint64
-			if v, err = decodeVarint(reader); err != nil {
-				return err
+			v, n := protowire.ConsumeVarint(remaining)
+			if n < 0 {
+				return protowire.ParseError(n)
 			}
+			remaining = remaining[n:]
+
 			if err := ma.AssembleKey().AssignString("Tsize"); err != nil {
 				return err
 			}
@@ -189,7 +216,8 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 				return err
 			}
 			haveTsize = true
-		} else {
+
+		default:
 			return fmt.Errorf("protobuf: (PBLink) invalid fieldNumber, expected 1, 2 or 3, got %d", fieldNum)
 		}
 	}
@@ -199,49 +227,4 @@ func unmarshalLink(reader shared.SlickReader, length int, ma ipld.MapAssembler) 
 	}
 
 	return nil
-}
-
-// decode the lead for a PB chunk, fieldNum & wireType, that tells us which
-// field in the schema we're looking at and what data type it is
-func decodeKey(reader shared.SlickReader) (int, int, error) {
-	var wire uint64
-	var err error
-	if wire, err = decodeVarint(reader); err != nil {
-		return 0, 0, err
-	}
-	fieldNum := int(wire >> 3)
-	wireType := int(wire & 0x7)
-	return fieldNum, wireType, nil
-}
-
-// decode a byte string from PB
-func decodeBytes(reader shared.SlickReader) ([]byte, error) {
-	bytesLen, err := decodeVarint(reader)
-	if err != nil {
-		return nil, err
-	}
-	byts, err := reader.Readn(int(bytesLen))
-	if err != nil {
-		return nil, fmt.Errorf("protobuf: unexpected read error: %w", err)
-	}
-	return byts, nil
-}
-
-// decode a varint from PB
-func decodeVarint(reader shared.SlickReader) (uint64, error) {
-	var v uint64
-	for shift := uint(0); ; shift += 7 {
-		if shift >= 64 {
-			return 0, ErrIntOverflow
-		}
-		b, err := reader.Readn1()
-		if err != nil {
-			return 0, fmt.Errorf("protobuf: unexpected read error: %w", err)
-		}
-		v |= uint64(b&0x7F) << shift
-		if b < 0x80 {
-			break
-		}
-	}
-	return v, nil
 }
