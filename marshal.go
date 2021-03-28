@@ -36,7 +36,11 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	var enc []byte
+
+	// 1KiB can be allocated on the stack, and covers most small nodes
+	// without having to grow the buffer and cause allocations.
+	enc := make([]byte, 0, 1024)
+
 	if links.Length() > 0 {
 		// collect links into a slice so we can properly sort for encoding
 		pbLinks := make([]pbLink, links.Length())
