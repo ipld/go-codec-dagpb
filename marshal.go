@@ -3,12 +3,12 @@ package dagpb
 import (
 	"fmt"
 	"io"
-	math_bits "math/bits"
 	"sort"
 
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"google.golang.org/protobuf/encoding/protowire"
 )
 
 type pbLink struct {
@@ -36,6 +36,7 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	var enc []byte
 	if links.Length() > 0 {
 		// collect links into a slice so we can properly sort for encoding
 		pbLinks := make([]pbLink, links.Length())
@@ -105,20 +106,35 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 
 		// links must be strictly sorted by Name before encoding, leaving stable
 		// ordering where the names are the same (or absent)
-		sortLinks(pbLinks)
+		sort.Stable(pbLinkSlice(pbLinks))
 		for _, link := range pbLinks {
-			size := link.encodedSize()
-			chunk := make([]byte, size+sizeOfVarint(uint64(size))+1)
-			chunk[0] = 0x12 // field & wire type for Links
-			offset := encodeVarint(chunk, 1, uint64(size))
-			wrote, err := link.marshal(chunk, offset)
-			if err != nil {
-				return err
+			hash := link.hash.Bytes()
+
+			size := 0
+			size += protowire.SizeTag(2)
+			size += protowire.SizeBytes(len(hash))
+			if link.hasName {
+				size += protowire.SizeTag(2)
+				size += protowire.SizeBytes(len(link.name))
 			}
-			if wrote != size {
-				return fmt.Errorf("bad PBLink marshal, wrote wrong number of bytes")
+			if link.hasTsize {
+				size += protowire.SizeTag(3)
+				size += protowire.SizeVarint(uint64(link.tsize))
 			}
-			out.Write(chunk)
+
+			enc = protowire.AppendTag(enc, 2, 2) // field & wire type for Links
+			enc = protowire.AppendVarint(enc, uint64(size))
+
+			enc = protowire.AppendTag(enc, 1, 2) // field & wire type for Hash
+			enc = protowire.AppendBytes(enc, hash)
+			if link.hasName {
+				enc = protowire.AppendTag(enc, 2, 2) // field & wire type for Name
+				enc = protowire.AppendString(enc, link.name)
+			}
+			if link.hasTsize {
+				enc = protowire.AppendTag(enc, 3, 0) // field & wire type for Tsize
+				enc = protowire.AppendVarint(enc, uint64(link.tsize))
+			}
 		}
 	} // if links
 
@@ -132,71 +148,12 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 		if err != nil {
 			return err
 		}
-		size := uint64(len(byts))
-		lead := make([]byte, sizeOfVarint(size)+1)
-		lead[0] = 0xa // field and wireType for Data
-		encodeVarint(lead, 1, size)
-		out.Write(lead)
-		out.Write(byts)
+		enc = protowire.AppendTag(enc, 1, 2) // field & wire type for Data
+		enc = protowire.AppendBytes(enc, byts)
 	}
 
-	return nil
-}
-
-// predict the byte size of the encoded Link
-func (link pbLink) encodedSize() (n int) {
-	l := link.hash.ByteLen()
-	n += 1 + l + sizeOfVarint(uint64(l))
-	if link.hasName {
-		l = len(link.name)
-		n += 1 + l + sizeOfVarint(uint64(l))
-	}
-	if link.hasTsize {
-		n += 1 + sizeOfVarint(uint64(link.tsize))
-	}
-	return n
-}
-
-// encode a Link to PB
-func (link pbLink) marshal(data []byte, offset int) (int, error) {
-	base := offset
-	data[offset] = 0xa // field and wireType for Hash
-	byts := link.hash.Bytes()
-	offset = encodeVarint(data, offset+1, uint64(len(byts)))
-	copy(data[offset:], byts)
-	offset += len(byts)
-	if link.hasName {
-		data[offset] = 0x12 // field and wireType for Name
-		offset = encodeVarint(data, offset+1, uint64(len(link.name)))
-		copy(data[offset:], link.name)
-		offset += len(link.name)
-	}
-	if link.hasTsize {
-		data[offset] = 0x18 // field and wireType for Tsize
-		offset = encodeVarint(data, offset+1, uint64(link.tsize))
-	}
-	return offset - base, nil
-}
-
-// predict the size of a varint for PB before creating it
-func sizeOfVarint(x uint64) (n int) {
-	return (math_bits.Len64(x|1) + 6) / 7
-}
-
-// encode a varint to a PB chunk
-func encodeVarint(data []byte, offset int, v uint64) int {
-	for v >= 1<<7 {
-		data[offset] = uint8(v&0x7f | 0x80)
-		v >>= 7
-		offset++
-	}
-	data[offset] = uint8(v)
-	return offset + 1
-}
-
-// stable sorting of Links using the strict sorting rules
-func sortLinks(links []pbLink) {
-	sort.Stable(pbLinkSlice(links))
+	_, err = out.Write(enc)
+	return err
 }
 
 type pbLinkSlice []pbLink
