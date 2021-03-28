@@ -15,21 +15,31 @@ import (
 // malformed data
 var ErrIntOverflow = fmt.Errorf("protobuf: varint overflow")
 
-// Unmarshal provides an IPLD codec decode interface for DAG-PB data. Provide
-// a compatible NodeAssembler and a byte source to unmarshal a DAG-PB IPLD
-// Node. Use the NodeAssembler from the PBNode type for safest construction
+// Decode provides an IPLD codec decode interface for DAG-PB data. Provide a
+// compatible NodeAssembler and a byte source to unmarshal a DAG-PB IPLD Node.
+// Use the NodeAssembler from the PBNode type for safest construction
 // (Type.PBNode.NewBuilder()). A Map assembler will also work.
-func Unmarshal(na ipld.NodeAssembler, in io.Reader) error {
-	var remaining []byte
+// This function is registered via the go-ipld-prime link loader for multicodec
+// code 0x70 when this package is invoked via init.
+func Decode(na ipld.NodeAssembler, in io.Reader) error {
+	var src []byte
 	if buf, ok := in.(interface{ Bytes() []byte }); ok {
-		remaining = buf.Bytes()
+		src = buf.Bytes()
 	} else {
 		var err error
-		remaining, err = ioutil.ReadAll(in)
+		src, err = ioutil.ReadAll(in)
 		if err != nil {
 			return err
 		}
 	}
+	return DecodeBytes(na, src)
+}
+
+// DecodeBytes is like Decode, but it uses an input buffer directly.
+// Decode will grab or read all the bytes from an io.Reader anyway, so this can
+// save having to copy the bytes or create a bytes.Buffer.
+func DecodeBytes(na ipld.NodeAssembler, src []byte) error {
+	remaining := src
 
 	ma, err := na.BeginMap(2)
 	if err != nil {
