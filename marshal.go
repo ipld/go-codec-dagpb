@@ -19,27 +19,41 @@ type pbLink struct {
 	hasTsize bool
 }
 
-// Marshal provides an IPLD codec encode interface for DAG-PB data. Provide a
+// Encode provides an IPLD codec encode interface for DAG-PB data. Provide a
 // conforming Node and a destination for bytes to marshal a DAG-PB IPLD Node.
 // The Node must strictly conform to the DAG-PB schema
 // (https://github.com/ipld/specs/blob/master/block-layer/codecs/dag-pb.md).
 // For safest use, build Nodes using the Type.PBNode type.
-func Marshal(inNode ipld.Node, out io.Writer) error {
+// This function is registered via the go-ipld-prime link loader for multicodec
+// code 0x70 when this package is invoked via init.
+func Encode(node ipld.Node, w io.Writer) error {
+	// 1KiB can be allocated on the stack, and covers most small nodes
+	// without having to grow the buffer and cause allocations.
+	enc := make([]byte, 0, 1024)
+
+	enc, err := AppendEncode(enc, node)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(enc)
+	return err
+}
+
+// AppendEncode is like Encode, but it uses a destination buffer directly.
+// This means less copying of bytes, and if the destination has enough capacity,
+// fewer allocations.
+func AppendEncode(enc []byte, inNode ipld.Node) ([]byte, error) {
 	// Wrap in a typed node for some basic schema form checking
 	builder := Type.PBNode.NewBuilder()
 	if err := builder.AssignNode(inNode); err != nil {
-		return err
+		return enc, err
 	}
 	node := builder.Build()
 
 	links, err := node.LookupByString("Links")
 	if err != nil {
-		return err
+		return enc, err
 	}
-
-	// 1KiB can be allocated on the stack, and covers most small nodes
-	// without having to grow the buffer and cause allocations.
-	enc := make([]byte, 0, 1024)
 
 	if links.Length() > 0 {
 		// collect links into a slice so we can properly sort for encoding
@@ -49,26 +63,26 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 		for !linksIter.Done() {
 			ii, link, err := linksIter.Next()
 			if err != nil {
-				return err
+				return enc, err
 			}
 
 			{ // Hash (required)
 				d, err := link.LookupByString("Hash")
 				if err != nil {
-					return err
+					return enc, err
 				}
 				l, err := d.AsLink()
 				if err != nil {
-					return err
+					return enc, err
 				}
 				if err != nil {
-					return err
+					return enc, err
 				}
 				cl, ok := l.(cidlink.Link)
 				if !ok {
 					// this _should_ be taken care of by the Typed conversion above with
 					// "missing required fields: Hash"
-					return fmt.Errorf("invalid DAG-PB form (link must have a Hash)")
+					return enc, fmt.Errorf("invalid DAG-PB form (link must have a Hash)")
 				}
 				pbLinks[ii].hash = cl.Cid
 			}
@@ -76,12 +90,12 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 			{ // Name (optional)
 				nameNode, err := link.LookupByString("Name")
 				if err != nil {
-					return err
+					return enc, err
 				}
 				if !nameNode.IsAbsent() {
 					name, err := nameNode.AsString()
 					if err != nil {
-						return err
+						return enc, err
 					}
 					pbLinks[ii].name = name
 					pbLinks[ii].hasName = true
@@ -91,15 +105,15 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 			{ // Tsize (optional)
 				tsizeNode, err := link.LookupByString("Tsize")
 				if err != nil {
-					return err
+					return enc, err
 				}
 				if !tsizeNode.IsAbsent() {
 					tsize, err := tsizeNode.AsInt()
 					if err != nil {
-						return err
+						return enc, err
 					}
 					if tsize < 0 {
-						return fmt.Errorf("Link has negative Tsize value [%v]", tsize)
+						return enc, fmt.Errorf("Link has negative Tsize value [%v]", tsize)
 					}
 					utsize := uint64(tsize)
 					pbLinks[ii].tsize = utsize
@@ -145,19 +159,18 @@ func Marshal(inNode ipld.Node, out io.Writer) error {
 	// Data (optional)
 	data, err := node.LookupByString("Data")
 	if err != nil {
-		return err
+		return enc, err
 	}
 	if !data.IsAbsent() {
 		byts, err := data.AsBytes()
 		if err != nil {
-			return err
+			return enc, err
 		}
 		enc = protowire.AppendTag(enc, 1, 2) // field & wire type for Data
 		enc = protowire.AppendBytes(enc, byts)
 	}
 
-	_, err = out.Write(enc)
-	return err
+	return enc, err
 }
 
 type pbLinkSlice []pbLink
