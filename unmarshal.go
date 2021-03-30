@@ -45,16 +45,10 @@ func DecodeBytes(na ipld.NodeAssembler, src []byte) error {
 	if err != nil {
 		return err
 	}
-	// always make "Links", even if we don't use it
-	if err := ma.AssembleKey().AssignString("Links"); err != nil {
-		return err
-	}
-	links, err := ma.AssembleValue().BeginList(0)
-	if err != nil {
-		return err
-	}
+	var links ipld.ListAssembler
 
 	haveData := false
+	haveLinks := false
 	for {
 		if len(remaining) == 0 {
 			break
@@ -70,6 +64,10 @@ func DecodeBytes(na ipld.NodeAssembler, src []byte) error {
 			return fmt.Errorf("protobuf: (PBNode) invalid wireType, expected 2, got %d", wireType)
 		}
 
+		// Note that we allow Data and Links to come in either order,
+		// since the spec defines that decoding "should" accept either form.
+		// This is for backwards compatibility with older IPFS data.
+
 		switch fieldNum {
 		case 1:
 			if haveData {
@@ -82,12 +80,15 @@ func DecodeBytes(na ipld.NodeAssembler, src []byte) error {
 			}
 			remaining = remaining[n:]
 
-			// Data must come after Links, so it's safe to close this here even if we
-			// didn't use it
-			if err := links.Finish(); err != nil {
-				return err
+			if links != nil {
+				// Links came before Data.
+				// Finish them before we start Data.
+				if err := links.Finish(); err != nil {
+					return err
+				}
+				links = nil
 			}
-			links = nil
+
 			if err := ma.AssembleKey().AssignString("Data"); err != nil {
 				return err
 			}
@@ -97,15 +98,26 @@ func DecodeBytes(na ipld.NodeAssembler, src []byte) error {
 			haveData = true
 
 		case 2:
-			if haveData {
-				return fmt.Errorf("protobuf: (PBNode) invalid order, found Data before Links content")
-			}
-
 			bytesLen, n := protowire.ConsumeVarint(remaining)
 			if n < 0 {
 				return protowire.ParseError(n)
 			}
 			remaining = remaining[n:]
+
+			if links == nil {
+				if haveLinks {
+					return fmt.Errorf("protobuf: (PBNode) duplicate Links section")
+				}
+
+				// The repeated "Links" part begins.
+				if err := ma.AssembleKey().AssignString("Links"); err != nil {
+					return err
+				}
+				links, err = ma.AssembleValue().BeginList(0)
+				if err != nil {
+					return err
+				}
+			}
 
 			curLink, err := links.AssembleValue().BeginMap(3)
 			if err != nil {
@@ -118,6 +130,7 @@ func DecodeBytes(na ipld.NodeAssembler, src []byte) error {
 			if err := curLink.Finish(); err != nil {
 				return err
 			}
+			haveLinks = true
 
 		default:
 			return fmt.Errorf("protobuf: (PBNode) invalid fieldNumber, expected 1 or 2, got %d", fieldNum)
@@ -125,6 +138,21 @@ func DecodeBytes(na ipld.NodeAssembler, src []byte) error {
 	}
 
 	if links != nil {
+		// We had some links at the end, so finish them.
+		if err := links.Finish(); err != nil {
+			return err
+		}
+
+	} else if !haveLinks {
+		// We didn't have any links.
+		// Since we always want a Links field, add one here.
+		if err := ma.AssembleKey().AssignString("Links"); err != nil {
+			return err
+		}
+		links, err := ma.AssembleValue().BeginList(0)
+		if err != nil {
+			return err
+		}
 		if err := links.Finish(); err != nil {
 			return err
 		}

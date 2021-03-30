@@ -280,3 +280,43 @@ func TestNodeWithNamedLinks(t *testing.T) {
 		"12390a221220b4397c02da5513563d33eef894bf68f2ccdf1bdfc14a976956ab3d1c72f735a0120e617564696f5f6f6e6c792e6d346118cda88f0b12310a221220025c13fcd1a885df444f64a4a82a26aea867b1148c68cb671e83589f971149321208636861742e74787418e40712340a2212205d44a305b9b328ab80451d0daa72a12a7bf2763c5f8bbe327597a31ee40d1e48120c706c61796261636b2e6d3375187412360a2212202539ed6e85f2a6f9097db9d76cffd49bf3042eb2e3e8e9af4a3ce842d49dea22120a7a6f6f6d5f302e6d70341897fb8592010a020801",
 		expected)
 }
+
+func TestNodeAlternativeOrder(t *testing.T) {
+	// This input has Data before Links.
+	input, err := hex.DecodeString("0a040802180612240a221220cf92fdefcdc34cac009c8b05eb662be0618db9de55ecd42785e9ec6712f8df6512240a221220cf92fdefcdc34cac009c8b05eb662be0618db9de55ecd42785e9ec6712f8df65")
+	if err != nil {
+		t.Fatal(err)
+	}
+	nb := Type.PBNode.NewBuilder()
+	if err := DecodeBytes(nb, input); err != nil {
+		t.Fatal(err)
+	}
+	node := nb.Build()
+
+	// We don't really care what the node looks like, or what the exact
+	// re-encode bytes are. But we do care that it's not exactly the same,
+	// but still the same length.
+	output, err := AppendEncode(nil, node)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Equal(input, output) {
+		t.Fatal("re-encoding should use canonical PBNode field order")
+	}
+	if len(input) != len(output) {
+		t.Fatal("re-encoding should have the same number of bytes")
+	}
+}
+
+func TestNodeWithDataBetweenLinks(t *testing.T) {
+	// This input has one Links element, then Data, then another Links element.
+	// As per the spec, this should fail as a duplicate Links field.
+	input, err := hex.DecodeString("12240a221220cf92fdefcdc34cac009c8b05eb662be0618db9de55ecd42785e9ec6712f8df650a040802180612240a221220cf92fdefcdc34cac009c8b05eb662be0618db9de55ecd42785e9ec6712f8df65")
+	if err != nil {
+		t.Fatal(err)
+	}
+	nb := Type.PBNode.NewBuilder()
+	if err := DecodeBytes(nb, input); err == nil {
+		t.Fatal("expected Decode to fail")
+	}
+}
