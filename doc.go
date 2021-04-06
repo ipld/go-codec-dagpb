@@ -26,3 +26,6 @@ ipld.Node's will need to have the appropriate fields (and no others) to
 successfully encode using this codec.
 */
 package dagpb
+
+//go:generate go run gen.go
+//go:generate gofmt -w ipldsch_minima.go ipldsch_satisfaction.go ipldsch_types.go
