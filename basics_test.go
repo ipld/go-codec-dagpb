@@ -74,7 +74,7 @@ func validate(t *testing.T, actual ipld.Node, expected pbNode) {
 					byts, err := val.AsBytes()
 					if err != nil {
 						t.Fatal(err)
-					} else if bytes.Compare(expected.data, byts) != 0 {
+					} else if !bytes.Equal(expected.data, byts) {
 						t.Fatal("Got unexpected Data contents")
 					}
 				}
@@ -101,7 +101,7 @@ func runTest(t *testing.T, bytsHex string, expected pbNode) {
 		}
 
 		// fmt.Printf("CMP\n\tFrom: %v\n\tTo:   %v\n", hex.EncodeToString(byts), hex.EncodeToString(buf.Bytes()))
-		if bytes.Compare(buf.Bytes(), byts) != 0 {
+		if !bytes.Equal(buf.Bytes(), byts) {
 			t.Fatal("Round-trip resulted in different bytes")
 		}
 	}
