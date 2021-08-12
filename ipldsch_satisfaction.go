@@ -1120,6 +1120,7 @@ func (ka *_PBLink__KeyAssembler) AssignString(k string) error {
 		ka.s += fieldBit__PBLink_Hash
 		ka.state = maState_expectValue
 		ka.f = 0
+		return nil
 	case "Name":
 		if ka.s&fieldBit__PBLink_Name != 0 {
 			return ipld.ErrRepeatedMapKey{Key: &fieldName__PBLink_Name}
@@ -1127,6 +1128,7 @@ func (ka *_PBLink__KeyAssembler) AssignString(k string) error {
 		ka.s += fieldBit__PBLink_Name
 		ka.state = maState_expectValue
 		ka.f = 1
+		return nil
 	case "Tsize":
 		if ka.s&fieldBit__PBLink_Tsize != 0 {
 			return ipld.ErrRepeatedMapKey{Key: &fieldName__PBLink_Tsize}
@@ -1134,10 +1136,10 @@ func (ka *_PBLink__KeyAssembler) AssignString(k string) error {
 		ka.s += fieldBit__PBLink_Tsize
 		ka.state = maState_expectValue
 		ka.f = 2
+		return nil
 	default:
 		return ipld.ErrInvalidKey{TypeName: "dagpb.PBLink", Key: &_String{k}}
 	}
-	return nil
 }
 func (_PBLink__KeyAssembler) AssignBytes([]byte) error {
 	return mixins.StringAssembler{TypeName: "dagpb.PBLink.KeyAssembler"}.AssignBytes(nil)
@@ -2716,6 +2718,7 @@ func (ka *_PBNode__KeyAssembler) AssignString(k string) error {
 		ka.s += fieldBit__PBNode_Links
 		ka.state = maState_expectValue
 		ka.f = 0
+		return nil
 	case "Data":
 		if ka.s&fieldBit__PBNode_Data != 0 {
 			return ipld.ErrRepeatedMapKey{Key: &fieldName__PBNode_Data}
@@ -2723,10 +2726,10 @@ func (ka *_PBNode__KeyAssembler) AssignString(k string) error {
 		ka.s += fieldBit__PBNode_Data
 		ka.state = maState_expectValue
 		ka.f = 1
+		return nil
 	default:
 		return ipld.ErrInvalidKey{TypeName: "dagpb.PBNode", Key: &_String{k}}
 	}
-	return nil
 }
 func (_PBNode__KeyAssembler) AssignBytes([]byte) error {
 	return mixins.StringAssembler{TypeName: "dagpb.PBNode.KeyAssembler"}.AssignBytes(nil)
