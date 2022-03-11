@@ -32,6 +32,7 @@ type testCase struct {
 	expectedForm  string
 	encodeError   string
 	decodeError   string
+	testEncode    bool
 }
 
 var testCases = []testCase{
@@ -63,6 +64,13 @@ var testCases = []testCase{
 	"Links": []
 }`,
 		encodeError: "missing required fields: Links",
+	},
+	{
+		name:          "Data some, short",
+		node:          &pbNode{data: dataSome},
+		expectedBytes: "0a0500010203",
+		decodeError:   "unexpected EOF",
+		encodeError:   "missing required fields: Links",
 	},
 	{
 		name:          "Links zero",
@@ -113,6 +121,12 @@ var testCases = []testCase{
 }`,
 	},
 	{
+		name:          "Links Hash some, short",
+		node:          &pbNode{links: []pbLink{{hash: acid}}},
+		expectedBytes: "120b0a090155000500010203",
+		decodeError:   "unexpected EOF",
+		testEncode:    false,
+	}, {
 		name:          "Links Name zero",
 		node:          &pbNode{links: []pbLink{{name: zeroName, hasName: true}}},
 		expectedBytes: "12021200",
@@ -211,24 +225,26 @@ func verifyRoundTrip(t *testing.T, tc testCase) {
 		node := buildNode(*tc.node)
 		actualBytes, err = nodeToString(t, node)
 
-		if tc.encodeError != "" {
-			if err != nil {
-				if !strings.Contains(err.Error(), tc.encodeError) {
-					t.Fatalf("got unexpeced encode error: [%v] (expected [%v])", err.Error(), tc.encodeError)
+		if tc.testEncode {
+			if tc.encodeError != "" {
+				if err != nil {
+					if !strings.Contains(err.Error(), tc.encodeError) {
+						t.Fatalf("got unexpeced encode error: [%v] (expected [%v])", err.Error(), tc.encodeError)
+					}
+				} else {
+					t.Fatalf("did not get expected encode error: %v", tc.encodeError)
 				}
 			} else {
-				t.Fatalf("did not get expected encode error: %v", tc.encodeError)
-			}
-		} else {
-			if err != nil {
-				t.Fatal(err)
-			} else {
-				if actualBytes != tc.expectedBytes {
-					t.Logf(
-						"Expected bytes: [%v]\nGot: [%v]\n",
-						tc.expectedBytes,
-						actualBytes)
-					t.Error("Did not match")
+				if err != nil {
+					t.Fatal(err)
+				} else {
+					if actualBytes != tc.expectedBytes {
+						t.Logf(
+							"Expected bytes: [%v]\nGot: [%v]\n",
+							tc.expectedBytes,
+							actualBytes)
+						t.Error("Did not match")
+					}
 				}
 			}
 		}
