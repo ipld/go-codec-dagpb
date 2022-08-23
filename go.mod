@@ -1,6 +1,6 @@
 module github.com/ipld/go-codec-dagpb
 
-go 1.17
+go 1.18
 
 require (
 	github.com/ipfs/go-cid v0.2.0
