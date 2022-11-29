@@ -73,9 +73,9 @@ func DecodeBytes(na ipld.NodeAssembler, src []byte) error {
 				return fmt.Errorf("protobuf: (PBNode) duplicate Data section")
 			}
 
-			chunk, n := protowire.ConsumeBytes(remaining)
-			if n < 0 {
-				return protowire.ParseError(n)
+			chunk, n, err := consumeBytes(remaining, true)
+			if err != nil {
+				return err
 			}
 			remaining = remaining[n:]
 
@@ -97,9 +97,9 @@ func DecodeBytes(na ipld.NodeAssembler, src []byte) error {
 			haveData = true
 
 		case 2:
-			chunk, n := protowire.ConsumeBytes(remaining)
-			if n < 0 {
-				return protowire.ParseError(n)
+			chunk, n, err := consumeBytes(remaining, false) // no need to alloc here, unmarshalLink will do that
+			if err != nil {
+				return err
 			}
 			remaining = remaining[n:]
 
@@ -188,9 +188,9 @@ func unmarshalLink(remaining []byte, ma ipld.MapAssembler) error {
 				return fmt.Errorf("protobuf: (PBLink) wrong wireType (%d) for Hash", wireType)
 			}
 
-			chunk, n := protowire.ConsumeBytes(remaining)
-			if n < 0 {
-				return protowire.ParseError(n)
+			chunk, n, err := consumeBytes(remaining, true)
+			if err != nil {
+				return err
 			}
 			remaining = remaining[n:]
 
@@ -217,9 +217,9 @@ func unmarshalLink(remaining []byte, ma ipld.MapAssembler) error {
 				return fmt.Errorf("protobuf: (PBLink) wrong wireType (%d) for Name", wireType)
 			}
 
-			chunk, n := protowire.ConsumeBytes(remaining)
-			if n < 0 {
-				return protowire.ParseError(n)
+			chunk, n, err := consumeBytes(remaining, true)
+			if err != nil {
+				return err
 			}
 			remaining = remaining[n:]
 
@@ -263,4 +263,17 @@ func unmarshalLink(remaining []byte, ma ipld.MapAssembler) error {
 	}
 
 	return nil
+}
+
+// consumeBytes will read a Bytes section from the begining of the provided slice, return it and the number
+// of bytes consumed in the process and optionally return it as a newly allocated slice
+func consumeBytes(byts []byte, alloc bool) ([]byte, int, error) {
+	chunk, n := protowire.ConsumeBytes(byts)
+	if n < 0 {
+		return nil, 0, protowire.ParseError(n)
+	}
+	if alloc {
+		return append(make([]byte, 0, len(chunk)), chunk...), n, nil
+	}
+	return chunk, n, nil
 }
