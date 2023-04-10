@@ -3,7 +3,7 @@ module github.com/ipld/go-codec-dagpb
 go 1.19
 
 require (
-	github.com/ipfs/go-cid v0.4.0
+	github.com/ipfs/go-cid v0.4.1
 	github.com/ipld/go-ipld-prime v0.20.0
 	google.golang.org/protobuf v1.30.0
 )
