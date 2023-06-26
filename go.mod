@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipld/go-ipld-prime v0.20.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.31.0
 )
 
 require (
