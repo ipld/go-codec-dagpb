@@ -2,7 +2,6 @@ module github.com/ipld/go-codec-dagpb
 
 go 1.21
 
-
 require (
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipld/go-ipld-prime v0.21.0
