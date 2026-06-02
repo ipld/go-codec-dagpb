@@ -4,7 +4,7 @@ go 1.25.7
 
 require (
 	github.com/ipfs/go-cid v0.6.1
-	github.com/ipld/go-ipld-prime v0.23.0
+	github.com/ipld/go-ipld-prime v0.24.0
 	google.golang.org/protobuf v1.36.11
 )
 
