@@ -19,6 +19,69 @@ type pbLink struct {
 	hasTsize bool
 }
 
+// FieldOrder selects the order of the top-level PBNode fields in the
+// serialized form. Both orders decode to the same node, but produce
+// different bytes and therefore different CIDs.
+type FieldOrder int
+
+const (
+	// LinksFirst writes the repeated Links field (field number 2) before
+	// the Data field (field number 1). This is the canonical DAG-PB order
+	// and the default.
+	LinksFirst FieldOrder = iota
+
+	// DataFirst writes the Data field (field number 1) before the repeated
+	// Links field (field number 2), so streaming readers can process Data
+	// (for example UnixFS HAMT parameters) before reading links. Opt-in:
+	// proposed for the unixfs-v1-2026 UnixFS profile by IPIP-550
+	// (https://github.com/ipfs/specs/pull/550).
+	DataFirst
+)
+
+// EncodeOptions customizes the encoded form of a PBNode. The zero value
+// matches the behavior of the package-level Encode and AppendEncode.
+type EncodeOptions struct {
+	// FieldOrder selects the order of the top-level PBNode fields. The
+	// default, LinksFirst, is the canonical DAG-PB form.
+	FieldOrder FieldOrder
+}
+
+// Encode is like the package-level Encode, customized by o.
+func (o EncodeOptions) Encode(node ipld.Node, w io.Writer) error {
+	// 1KiB can be allocated on the stack, and covers most small nodes
+	// without having to grow the buffer and cause allocations.
+	enc := make([]byte, 0, 1024)
+
+	enc, err := o.AppendEncode(enc, node)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(enc)
+	return err
+}
+
+// AppendEncode is like the package-level AppendEncode, customized by o.
+func (o EncodeOptions) AppendEncode(enc []byte, inNode ipld.Node) ([]byte, error) {
+	// Wrap in a typed node for some basic schema form checking
+	builder := Type.PBNode.NewBuilder()
+	if err := builder.AssignNode(inNode); err != nil {
+		return enc, err
+	}
+	node := builder.Build()
+
+	var err error
+	if o.FieldOrder == DataFirst {
+		if enc, err = appendData(enc, node); err != nil {
+			return enc, err
+		}
+		return appendLinks(enc, node)
+	}
+	if enc, err = appendLinks(enc, node); err != nil {
+		return enc, err
+	}
+	return appendData(enc, node)
+}
+
 // Encode provides an IPLD codec encode interface for DAG-PB data. Provide a
 // conforming Node and a destination for bytes to marshal a DAG-PB IPLD Node.
 // The Node must strictly conform to the DAG-PB schema
@@ -27,29 +90,18 @@ type pbLink struct {
 // This function is registered via the go-ipld-prime link loader for multicodec
 // code 0x70 when this package is invoked via init.
 func Encode(node ipld.Node, w io.Writer) error {
-	// 1KiB can be allocated on the stack, and covers most small nodes
-	// without having to grow the buffer and cause allocations.
-	enc := make([]byte, 0, 1024)
-
-	enc, err := AppendEncode(enc, node)
-	if err != nil {
-		return err
-	}
-	_, err = w.Write(enc)
-	return err
+	return EncodeOptions{}.Encode(node, w)
 }
 
 // AppendEncode is like Encode, but it uses a destination buffer directly.
 // This means less copying of bytes, and if the destination has enough capacity,
 // fewer allocations.
 func AppendEncode(enc []byte, inNode ipld.Node) ([]byte, error) {
-	// Wrap in a typed node for some basic schema form checking
-	builder := Type.PBNode.NewBuilder()
-	if err := builder.AssignNode(inNode); err != nil {
-		return enc, err
-	}
-	node := builder.Build()
+	return EncodeOptions{}.AppendEncode(enc, inNode)
+}
 
+// appendLinks appends the wire encoding of the node's repeated Links field.
+func appendLinks(enc []byte, node ipld.Node) ([]byte, error) {
 	links, err := node.LookupByString("Links")
 	if err != nil {
 		return enc, err
@@ -153,7 +205,11 @@ func AppendEncode(enc []byte, inNode ipld.Node) ([]byte, error) {
 		}
 	} // if links
 
-	// Data (optional)
+	return enc, nil
+}
+
+// appendData appends the wire encoding of the node's Data field, if present.
+func appendData(enc []byte, node ipld.Node) ([]byte, error) {
 	data, err := node.LookupByString("Data")
 	if err != nil {
 		return enc, err
@@ -167,7 +223,7 @@ func AppendEncode(enc []byte, inNode ipld.Node) ([]byte, error) {
 		enc = protowire.AppendBytes(enc, byts)
 	}
 
-	return enc, err
+	return enc, nil
 }
 
 type pbLinkSlice []pbLink
